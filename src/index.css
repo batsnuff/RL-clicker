@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+      monospace;
+  }
+}
+
+@layer components {
+  .game-button {
+    @apply px-4 py-2 rounded-lg font-bold transition-all duration-200 transform hover:scale-105 active:scale-95;
+  }
+  
+  .game-button-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white;
+  }
+  
+  .game-button-secondary {
+    @apply bg-gray-600 hover:bg-gray-700 text-white;
+  }
+  
+  .game-button-success {
+    @apply bg-green-600 hover:bg-green-700 text-white;
+  }
+  
+  .game-button-danger {
+    @apply bg-red-600 hover:bg-red-700 text-white;
+  }
+  
+  .game-button-warning {
+    @apply bg-yellow-600 hover:bg-yellow-700 text-white;
+  }
+  
+  .game-button-disabled {
+    @apply bg-gray-500 text-gray-300 cursor-not-allowed;
+  }
+  
+  .stat-bar {
+    @apply w-full bg-gray-700 rounded-full h-2;
+  }
+  
+  .stat-bar-fill {
+    @apply h-2 rounded-full transition-all duration-300;
+  }
+  
+  .enemy-avatar {
+    @apply text-6xl mb-4 transform hover:scale-110 transition-transform duration-200 hover:animate-bounce cursor-pointer;
+  }
+  
+  .skill-card {
+    @apply bg-gray-800 p-4 rounded-lg border border-gray-600;
+  }
+  
+  .skill-card-locked {
+    @apply opacity-50;
+  }
+  
+  .inventory-slot {
+    @apply bg-gray-800 p-4 rounded-lg border border-gray-600;
+  }
+  
+  .craft-recipe {
+    @apply bg-gray-800 p-4 rounded-lg border border-gray-600;
+  }
+  
+  .craft-recipe-locked {
+    @apply opacity-50;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.animate-fadeOut {
+  animation: fadeOut 0.5s ease-out forwards;
+}
+
+.monster-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.monster-name {
+  flex: 1;
+  text-align: center;
+}
+
+.floor-info {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
