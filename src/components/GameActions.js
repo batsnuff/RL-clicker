@@ -482,6 +482,75 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     }
   };
 
+  // Przetwarzanie materiałów
+  const processMaterials = (conversionType, material, quantity) => {
+    if (quantity <= 0 || !gameState.materials[material] || gameState.materials[material] < quantity) {
+      setGameState(prev => ({ ...prev, message: 'Niewystarczająco materiałów!' }));
+      return;
+    }
+
+    setGameState(prev => {
+      const newMaterials = { ...prev.materials };
+      let newGold = prev.gold;
+      let message = '';
+
+      if (conversionType === 'upgrade') {
+        // Ulepszanie materiałów
+        const materialTiers = ['wood', 'iron', 'steel', 'mithril', 'adamant'];
+        const currentTierIndex = materialTiers.indexOf(material);
+        
+        if (currentTierIndex === -1 || currentTierIndex === materialTiers.length - 1) {
+          return { ...prev, message: 'Nie można ulepszyć tego materiału!' };
+        }
+
+        const nextTier = materialTiers[currentTierIndex + 1];
+        const conversionRates = {
+          wood: { iron: 3, steel: 8, mithril: 20, adamant: 50 },
+          iron: { steel: 3, mithril: 8, adamant: 20 },
+          steel: { mithril: 3, adamant: 8 },
+          mithril: { adamant: 3 }
+        };
+
+        const rate = conversionRates[material][nextTier];
+        const maxUpgrades = Math.floor(quantity / rate);
+        
+        if (maxUpgrades === 0) {
+          return { ...prev, message: 'Niewystarczająco materiałów do ulepszenia!' };
+        }
+
+        const materialsUsed = maxUpgrades * rate;
+        newMaterials[material] -= materialsUsed;
+        newMaterials[nextTier] = (newMaterials[nextTier] || 0) + maxUpgrades;
+        
+        message = `Ulepszono ${materialsUsed} ${materialNames[material]} na ${maxUpgrades} ${materialNames[nextTier]}!`;
+      } else if (conversionType === 'gold') {
+        // Konwersja na złoto
+        const goldRates = {
+          wood: 2,
+          iron: 5,
+          steel: 12,
+          mithril: 30,
+          adamant: 75,
+          gems: 15,
+          essence: 50
+        };
+
+        const goldGained = quantity * goldRates[material];
+        newMaterials[material] -= quantity;
+        newGold += goldGained;
+        
+        message = `Zamieniono ${quantity} ${materialNames[material]} na ${goldGained} złota!`;
+      }
+
+      return {
+        ...prev,
+        materials: newMaterials,
+        gold: newGold,
+        message: message
+      };
+    });
+  };
+
   // Reset gry
   const resetGame = () => {
     setGameState(prev => ({
@@ -521,6 +590,7 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     buyItem,
     upgradeSkill,
     craftItem,
+    processMaterials,
     prestige,
     resetGame,
     saveGame,

@@ -7,6 +7,7 @@ import PlayerStats from './PlayerStats';
 import GameTab from './GameTab';
 import SkillsTab from './SkillsTab';
 import CraftingTab from './CraftingTab';
+import MaterialProcessing from './MaterialProcessing';
 import LoadingScreen from './LoadingScreen';
 import LevelUpNotification from './LevelUpNotification';
 import HelpModal from './HelpModal';
@@ -611,7 +612,7 @@ export default function RogueClickerGame() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-indigo-900 p-4">
+    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-indigo-900 p-2 sm:p-4">
       {/* Level Up Notification */}
       <LevelUpNotification 
         levelUp={levelUp} 
@@ -653,51 +654,54 @@ export default function RogueClickerGame() {
         {gameState.playerClass && (
           <>
             {/* Nawigacja */}
-            <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-5">
-              <div className="flex justify-between items-center">
-                {/* Przycisk Reset - skrajnie po lewej */}
+            <div className="bg-black bg-opacity-50 rounded-lg p-2 sm:p-4 mb-5">
+              {/* Główne przyciski nawigacji - responsywne */}
+              <div className="flex flex-wrap justify-center gap-1 sm:gap-2 mb-2 sm:mb-0">
+                  {[
+                    { id: 'game', name: 'Gra', icon: Sword, shortName: 'Gra' },
+                    { id: 'shop', name: 'Sklep', icon: ShoppingCart, shortName: 'Sklep' },
+                    { id: 'inventory', name: 'Ekwipunek', icon: Backpack, shortName: 'Ekwip.' },
+                    { id: 'skills', name: 'Umiejętności', icon: Zap, shortName: 'Umiej.' },
+                    { id: 'craft', name: 'Craft', icon: Hammer, shortName: 'Craft' },
+                    { id: 'process', name: 'Przetwarzanie', icon: TrendingUp, shortName: 'Przetw.' }
+                  ].map(tab => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setGameState(prev => ({ ...prev, activeTab: tab.id }))}
+                      className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs sm:text-sm animate-slideIn ${
+                        gameState.activeTab === tab.id 
+                          ? 'bg-purple-600 text-white animate-glow' 
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      <Icon size={14} className="sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">{tab.name}</span>
+                      <span className="sm:hidden">{tab.shortName}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {/* Przyciski akcji - na dole na małych ekranach, po bokach na większych */}
+              <div className="flex justify-between items-center gap-2">
                 <button
                   onClick={gameActions.resetGame}
-                  className="bg-red-600 hover:bg-red-700 text-white px-1 py-0.5 rounded-lg flex items-center gap-0.5 transition-colors text-xs"
+                  className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-lg flex items-center gap-1 transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs animate-slideInFromLeft"
                 >
-                  <RotateCcw size={8} />
-                  Reset Gry
+                  <RotateCcw size={12} />
+                  <span className="hidden sm:inline">Reset Gry</span>
+                  <span className="sm:hidden">Reset</span>
                 </button>
 
-                {/* Główne przyciski nawigacji - po środku */}
-                <div className="flex gap-3">
-                  {[
-                    { id: 'game', name: 'Gra', icon: Sword },
-                    { id: 'shop', name: 'Sklep', icon: ShoppingCart },
-                    { id: 'inventory', name: 'Ekwipunek', icon: Backpack },
-                    { id: 'skills', name: 'Umiejętności', icon: Zap },
-                    { id: 'craft', name: 'Craft', icon: Hammer }
-                  ].map(tab => {
-                    const Icon = tab.icon;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setGameState(prev => ({ ...prev, activeTab: tab.id }))}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
-                          gameState.activeTab === tab.id 
-                            ? 'bg-purple-600 text-white' 
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                      >
-                        <Icon size={16} />
-                        {tab.name}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Przycisk Zapisz i wyjdź - skrajnie po prawej */}
                 <button
                   onClick={gameActions.saveAndExit}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-1 py-0.5 rounded-lg flex items-center gap-0.5 transition-colors text-xs"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-lg flex items-center gap-1 transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs animate-slideInFromRight"
                 >
-                  <Shield size={8} />
-                  Zapisz i wyjdź
+                  <Shield size={12} />
+                  <span className="hidden sm:inline">Zapisz i wyjdź</span>
+                  <span className="sm:hidden">Zapisz</span>
                 </button>
               </div>
             </div>
@@ -711,7 +715,7 @@ export default function RogueClickerGame() {
 
             {/* Walka z przeciwnikiem - tylko w zakładce game */}
             {gameState.activeTab === 'game' && gameState.enemy && gameState.enemy.type === 'enemy' && (
-              <div className="bg-black bg-opacity-60 rounded-lg p-8 mb-2 border-2 border-red-500 text-center relative">
+              <div className="bg-black bg-opacity-60 rounded-lg p-4 sm:p-8 mb-2 border-2 border-red-500 text-center relative">
                 {/* Przycisk Jak grać? - lewy górny róg */}
                 <button
                   onClick={() => setShowHelp(true)}
@@ -722,11 +726,11 @@ export default function RogueClickerGame() {
                 </button>
                 
                 <div className="monster-header mb-4">
-                  <h3 className="monster-name text-2xl font-bold text-white">
+                  <h3 className="monster-name text-lg sm:text-2xl font-bold text-white">
                     {gameState.enemy.name} (Lv.{gameState.enemy.level})
                   </h3>
                   <div className="floor-info">
-                    <h4 className="text-xl font-bold text-yellow-400">
+                    <h4 className="text-base sm:text-xl font-bold text-yellow-400">
                       Piętro {gameState.floor}
                       {gameState.prestigeLevel > 0 && (
                         <span className="text-yellow-300 ml-2">★{gameState.prestigeLevel}</span>
@@ -747,7 +751,7 @@ export default function RogueClickerGame() {
                   </div>
                 </div>
                 
-                <div className="text-white text-lg mb-4">
+                <div className="text-white text-sm sm:text-lg mb-4">
                   {gameState.autoClick && gameState.skills.autoClick > 0 ? 
                     'Auto-klik aktywny!' : 'Kliknij, aby zaatakować!'}
                 </div>
@@ -756,28 +760,28 @@ export default function RogueClickerGame() {
                 <button
                   onClick={gameActions.attackEnemy}
                   disabled={gameState.gameOver}
-                  className="text-6xl mb-4 transform hover:scale-110 transition-transform duration-200 hover:animate-bounce cursor-pointer"
+                  className="text-4xl sm:text-6xl mb-4 transform hover:scale-110 transition-all duration-200 hover:animate-bounce cursor-pointer animate-float"
                 >
                   {gameState.enemy.enemyType === 'boss' ? '👹' : 
                    gameState.enemy.enemyType === 'beast' ? '🐺' :
                    gameState.enemy.enemyType === 'undead' ? '💀' : '👹'}
                 </button>
 
-                <div className="text-white mb-4">
+                <div className="text-white text-sm sm:text-base mb-4">
                   ⚔️ Normalny Atak ({gameState.clickDamage} obrażeń)
                 </div>
 
                 {/* Umiejętności specjalne */}
                 <div className="border-t border-gray-600 pt-4">
-                  <div className="text-white mb-2">Umiejętności specjalne:</div>
-                  <div className="flex justify-center gap-2 flex-wrap">
+                  <div className="text-white text-sm sm:text-base mb-2">Umiejętności specjalne:</div>
+                  <div className="flex justify-center gap-1 sm:gap-2 flex-wrap">
                     {gameState.playerClass === 'mage' && gameState.skills.fireball > 0 && (
                       <button
                         onClick={() => gameActions.useSkill('fireball')}
                         disabled={gameState.mana < 15}
-                        className={`px-3 py-2 rounded text-sm ${
+                        className={`px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                           gameState.mana >= 15 
-                            ? 'bg-red-600 hover:bg-red-700 text-white' 
+                            ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' 
                             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                         }`}
                       >
@@ -789,9 +793,9 @@ export default function RogueClickerGame() {
                       <button
                         onClick={() => gameActions.useSkill('heal')}
                         disabled={gameState.mana < 10}
-                        className={`px-3 py-2 rounded text-sm ${
+                        className={`px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                           gameState.mana >= 10 
-                            ? 'bg-green-600 hover:bg-green-700 text-white' 
+                            ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse' 
                             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                         }`}
                       >
@@ -803,9 +807,9 @@ export default function RogueClickerGame() {
                       <button
                         onClick={() => gameActions.useSkill('powerShot')}
                         disabled={gameState.mana < 20}
-                        className={`px-3 py-2 rounded text-sm ${
+                        className={`px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                           gameState.mana >= 20 
-                            ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
+                            ? 'bg-yellow-600 hover:bg-yellow-700 text-white animate-pulse' 
                             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                         }`}
                       >
@@ -817,9 +821,9 @@ export default function RogueClickerGame() {
                       <button
                         onClick={() => gameActions.useSkill('lightning')}
                         disabled={gameState.mana < 25}
-                        className={`px-3 py-2 rounded text-sm ${
+                        className={`px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                           gameState.mana >= 25 
-                            ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                            ? 'bg-purple-600 hover:bg-purple-700 text-white animate-pulse' 
                             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                         }`}
                       >
@@ -853,11 +857,11 @@ export default function RogueClickerGame() {
 
             {/* Sklep */}
             {gameState.activeTab === 'shop' && (
-              <div className="bg-black bg-opacity-60 rounded-lg p-6">
-                <h2 className="text-2xl font-bold text-white mb-5 text-center">🏪 Sklep Mikstur</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {shopItems.map(item => (
-                    <div key={item.id} className="bg-gray-800 p-4 rounded-lg border border-gray-600">
+              <div className="bg-black bg-opacity-60 rounded-lg p-4 sm:p-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-5 text-center">🏪 Sklep Mikstur</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {shopItems.map((item, index) => (
+                    <div key={item.id} className="bg-gray-800 p-4 rounded-lg border border-gray-600 animate-slideIn" style={{ animationDelay: `${index * 0.1}s` }}>
                       <h3 className="font-bold text-white mb-2">{item.name}</h3>
                       <p className="text-gray-300 text-sm mb-2">
                         +{item.value} {item.effect === 'health' ? 'HP' : 
@@ -868,9 +872,9 @@ export default function RogueClickerGame() {
                       <button
                         onClick={() => gameActions.buyItem(item)}
                         disabled={gameState.gold < item.cost}
-                        className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                        className={`w-full px-4 py-2 rounded text-sm font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                           gameState.gold >= item.cost
-                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse'
                             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                         }`}
                       >
@@ -884,10 +888,10 @@ export default function RogueClickerGame() {
 
             {/* Ekwipunek */}
             {gameState.activeTab === 'inventory' && (
-              <div className="bg-black bg-opacity-60 rounded-lg p-6">
-                <h2 className="text-2xl font-bold text-white mb-5 text-center">🎒 Ekwipunek</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-gray-800 p-4 rounded-lg">
+              <div className="bg-black bg-opacity-60 rounded-lg p-4 sm:p-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-5 text-center">🎒 Ekwipunek</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="bg-gray-800 p-4 rounded-lg animate-slideInFromLeft">
                     <h3 className="font-bold text-white mb-3">⚔️ Broń</h3>
                     {gameState.inventory.weapon ? (
                       <div className="text-white">
@@ -909,7 +913,7 @@ export default function RogueClickerGame() {
                       <p className="text-gray-400">Brak</p>
                     )}
                   </div>
-                  <div className="bg-gray-800 p-4 rounded-lg">
+                  <div className="bg-gray-800 p-4 rounded-lg animate-slideIn" style={{ animationDelay: '0.2s' }}>
                     <h3 className="font-bold text-white mb-3">🛡️ Zbroja</h3>
                     {gameState.inventory.armor ? (
                       <div className="text-white">
@@ -931,7 +935,7 @@ export default function RogueClickerGame() {
                       <p className="text-gray-400">Brak</p>
                     )}
                   </div>
-                  <div className="bg-gray-800 p-4 rounded-lg">
+                  <div className="bg-gray-800 p-4 rounded-lg animate-slideInFromRight" style={{ animationDelay: '0.4s' }}>
                     <h3 className="font-bold text-white mb-3">💍 Akcesoria</h3>
                     {gameState.inventory.accessory ? (
                       <div className="text-white">
@@ -964,6 +968,14 @@ export default function RogueClickerGame() {
                 craftingRecipes={craftingRecipes}
                 craftingCategory={craftingCategory}
                 setCraftingCategory={setCraftingCategory}
+              />
+            )}
+
+            {/* Przetwarzanie Materiałów */}
+            {gameState.activeTab === 'process' && (
+              <MaterialProcessing 
+                gameState={gameState} 
+                onProcessMaterials={gameActions.processMaterials}
               />
             )}
 

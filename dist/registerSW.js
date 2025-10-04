@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/RL-clicker/sw.js', { scope: '/RL-clicker/' })})}
