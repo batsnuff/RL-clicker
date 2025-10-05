@@ -36,26 +36,26 @@ export default function LevelUpNotification({ levelUp, onClose }) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 animate-fadeIn"
       onClick={handleClose}
     >
       <div 
-        className={`bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 rounded-2xl p-8 shadow-2xl border-4 border-yellow-300 transform ${animationClass}`}
+        className={`bg-gradient-to-br from-gray-900 via-black to-red-900 rounded-2xl p-8 shadow-2xl border-4 border-red-600 transform ${animationClass} animate-darkSoulsRise`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center">
           {/* Tytuł Level Up */}
-          <div className="text-6xl mb-4 animate-pulse">🎉</div>
-          <h2 className="text-4xl font-bold text-white mb-2 text-shadow-lg">
+          <div className="text-6xl mb-4 animate-darkSoulsFloat">⚔️</div>
+          <h2 className="text-4xl font-bold text-white mb-2 text-shadow-lg animate-darkSoulsGlow">
             LEVEL UP!
           </h2>
-          <div className="text-3xl font-bold text-yellow-900 mb-6">
+          <div className="text-3xl font-bold text-red-400 mb-6 animate-darkSoulsFlicker">
             Poziom {newLevel}
           </div>
 
           {/* Statystyki */}
-          <div className="bg-yellow-100 rounded-lg p-4 mb-4">
-            <h3 className="text-xl font-bold text-yellow-900 mb-3">Nowe statystyki:</h3>
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-4 mb-4 border border-red-600 animate-darkSoulsRise">
+            <h3 className="text-xl font-bold text-white mb-3 animate-darkSoulsGlow">Nowe statystyki:</h3>
             <div className="grid grid-cols-2 gap-2 text-lg">
               <div className="flex justify-between">
                 <span className="text-yellow-800">❤️ HP:</span>
@@ -79,7 +79,7 @@ export default function LevelUpNotification({ levelUp, onClose }) {
           {/* Przycisk zamknięcia */}
           <button
             onClick={handleClose}
-            className="bg-yellow-700 hover:bg-yellow-800 text-white px-6 py-2 rounded-lg font-bold transition-colors"
+            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white px-6 py-2 rounded-lg font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 animate-darkSoulsPulse border border-red-400"
           >
             Kontynuuj
           </button>

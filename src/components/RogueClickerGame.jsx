@@ -724,7 +724,7 @@ export default function RogueClickerGame() {
             <div className="text-center mt-6">
               <button
                 onClick={gameActions.loadGame}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold"
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 animate-darkSoulsPulse border border-green-400"
               >
                 <Shield className="inline mr-2" size={16} />
                 Wczytaj zapisaną grę

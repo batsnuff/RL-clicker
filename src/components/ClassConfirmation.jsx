@@ -14,11 +14,11 @@ export default function ClassConfirmation({ selectedClass, classData, playerName
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-      <div className="bg-gradient-to-b from-blue-900 to-purple-900 rounded-2xl p-8 max-w-md mx-4 border-4 border-yellow-400">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 animate-fadeIn">
+      <div className="bg-gradient-to-br from-gray-900 via-black to-red-900 rounded-2xl p-8 max-w-md mx-4 border-4 border-red-600 animate-darkSoulsRise">
         <div className="text-center">
           {/* Tytuł */}
-          <h2 className="text-3xl font-bold text-white mb-6">Potwierdź Wybór Klasy</h2>
+          <h2 className="text-3xl font-bold text-white mb-6 animate-darkSoulsGlow">Potwierdź Wybór Klasy</h2>
           
           {/* Nazwa postaci */}
           {playerName && (
@@ -69,13 +69,13 @@ export default function ClassConfirmation({ selectedClass, classData, playerName
           <div className="flex gap-4 justify-center">
             <button
               onClick={onCancel}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-bold transition-colors"
+              className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 border border-gray-500"
             >
               Anuluj
             </button>
             <button
               onClick={onConfirm}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors"
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 animate-darkSoulsPulse border border-green-400"
             >
               Potwierdź
             </button>

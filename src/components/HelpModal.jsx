@@ -5,25 +5,25 @@ export default function HelpModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-      <div className="bg-gradient-to-b from-purple-900 to-blue-900 rounded-2xl p-8 max-w-2xl mx-4 border-4 border-yellow-400 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 animate-fadeIn">
+      <div className="bg-gradient-to-br from-gray-900 via-black to-red-900 rounded-2xl p-8 max-w-2xl mx-4 border-4 border-red-600 max-h-[90vh] overflow-y-auto animate-darkSoulsRise">
         <div className="relative">
           {/* Przycisk zamknięcia */}
           <button
             onClick={onClose}
-            className="absolute -top-4 -right-4 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 transition-colors"
+            className="absolute -top-4 -right-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-full p-2 transition-all duration-200 transform hover:scale-105 active:scale-95 animate-darkSoulsPulse border border-red-400"
           >
             <X size={20} />
           </button>
 
           {/* Tytuł */}
-          <h2 className="text-3xl font-bold text-white mb-6 text-center">
-            🎮 Jak grać w Rogue Clicker RPG?
+          <h2 className="text-3xl font-bold text-white mb-6 text-center animate-darkSoulsGlow">
+            ⚔️ Jak grać w The Darker Clicker?
           </h2>
 
           {/* Instrukcja */}
           <div className="text-white space-y-4">
-            <div className="bg-black bg-opacity-50 rounded-lg p-4">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-4 border border-red-600 animate-darkSoulsRise">
               <h3 className="text-xl font-bold text-yellow-400 mb-3">1. 🎯 Podstawy gry</h3>
               <ul className="list-disc list-inside space-y-2 text-sm">
                 <li>Wybierz klasę postaci (Wojownik, Mag, Łucznik)</li>
@@ -33,7 +33,7 @@ export default function HelpModal({ isOpen, onClose }) {
               </ul>
             </div>
 
-            <div className="bg-black bg-opacity-50 rounded-lg p-4">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-4 border border-red-600 animate-darkSoulsRise">
               <h3 className="text-xl font-bold text-yellow-400 mb-3">2. ⚔️ Walka</h3>
               <ul className="list-disc list-inside space-y-2 text-sm">
                 <li><strong>Normalny atak:</strong> Kliknij na potwora</li>
@@ -43,7 +43,7 @@ export default function HelpModal({ isOpen, onClose }) {
               </ul>
             </div>
 
-            <div className="bg-black bg-opacity-50 rounded-lg p-4">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-4 border border-red-600 animate-darkSoulsRise">
               <h3 className="text-xl font-bold text-yellow-400 mb-3">3. 📈 Postęp</h3>
               <ul className="list-disc list-inside space-y-2 text-sm">
                 <li><strong>Poziomy:</strong> Zyskujesz statystyki za doświadczenie</li>
@@ -53,7 +53,7 @@ export default function HelpModal({ isOpen, onClose }) {
               </ul>
             </div>
 
-            <div className="bg-black bg-opacity-50 rounded-lg p-4">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-4 border border-red-600 animate-darkSoulsRise">
               <h3 className="text-xl font-bold text-yellow-400 mb-3">4. 🏪 Sklep i Craft</h3>
               <ul className="list-disc list-inside space-y-2 text-sm">
                 <li><strong>Sklep:</strong> Kupuj mikstury za złoto</li>
@@ -63,7 +63,7 @@ export default function HelpModal({ isOpen, onClose }) {
               </ul>
             </div>
 
-            <div className="bg-black bg-opacity-50 rounded-lg p-4">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-4 border border-red-600 animate-darkSoulsRise">
               <h3 className="text-xl font-bold text-yellow-400 mb-3">5. 💾 Zapisywanie</h3>
               <ul className="list-disc list-inside space-y-2 text-sm">
                 <li><strong>Zapisz i wyjdź:</strong> Bezpiecznie zapisz postęp</li>
@@ -73,7 +73,7 @@ export default function HelpModal({ isOpen, onClose }) {
               </ul>
             </div>
 
-            <div className="bg-black bg-opacity-50 rounded-lg p-4">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-4 border border-red-600 animate-darkSoulsRise">
               <h3 className="text-xl font-bold text-yellow-400 mb-3">6. 🎯 Wskazówki</h3>
               <ul className="list-disc list-inside space-y-2 text-sm">
                 <li>Zawsze miej zapas mikstur zdrowia i many</li>

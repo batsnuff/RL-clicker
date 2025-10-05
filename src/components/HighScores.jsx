@@ -4,11 +4,11 @@ export default function HighScores({ highScores }) {
   if (highScores.length === 0) return null;
 
   return (
-    <div className="bg-black bg-opacity-60 rounded-lg p-6 mb-6">
-      <h2 className="text-xl font-bold text-white mb-4 text-center">🏆 Ostatnie Wyniki</h2>
+    <div className="bg-gradient-to-br from-gray-900 via-black to-red-900 rounded-lg p-6 mb-6 border-2 border-red-600 animate-darkSoulsRise">
+      <h2 className="text-xl font-bold text-white mb-4 text-center animate-darkSoulsGlow">🏆 Ostatnie Wyniki</h2>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
         {highScores.map((score, index) => (
-          <div key={index} className="bg-gray-800 p-3 rounded text-white text-sm text-center">
+          <div key={index} className="bg-gradient-to-br from-gray-800 to-gray-900 p-3 rounded text-white text-sm text-center border border-red-600 animate-darkSoulsRise">
             <div className="font-bold">#{index + 1}</div>
             <div>Poziom: {score.level}</div>
             <div>Piętro: {score.floor}</div>
