@@ -11,6 +11,8 @@ import MaterialProcessing from './MaterialProcessing';
 import LoadingScreen from './LoadingScreen';
 import LevelUpNotification from './LevelUpNotification';
 import HelpModal from './HelpModal';
+import ResetConfirmationModal from './ResetConfirmationModal';
+import ExitConfirmationModal from './ExitConfirmationModal';
 
 export default function RogueClickerGame() {
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +43,7 @@ export default function RogueClickerGame() {
     // Stan gry
     floor: 1,
     gameOver: false,
-    message: 'Witaj w Rogue Clicker! Wybierz klasę postaci.',
+    message: 'Witaj w The Darker Clicker! Wybierz swoją ścieżkę...',
     
     // UI
     activeTab: 'game',
@@ -52,6 +54,14 @@ export default function RogueClickerGame() {
     
     // Auto-click
     autoClick: false,
+    
+    // Berserk buff
+    berserkActive: false,
+    berserkTimeLeft: 0,
+    
+    // Modal states
+    showResetModal: false,
+    showExitModal: false,
     
     // Ekwipunek
     inventory: {
@@ -77,7 +87,14 @@ export default function RogueClickerGame() {
       // Poziom 21
       autoClick: 0,
       teleport: 0,
-      divine: 0
+      divine: 0,
+      // Nowe skille poziom 21
+      berserkRage: 0,
+      materialMagnet: 0,
+      goldRush: 0,
+      experienceBoost: 0,
+      criticalMastery: 0,
+      healthRegen: 0
     },
     
     // Materiały
@@ -97,9 +114,33 @@ export default function RogueClickerGame() {
 
   // Game data
   const classes = {
-    warrior: { name: 'Kontestator', health: 120, mana: 30, damage: 15, defense: 5 },
-    mage: { name: 'Augur', health: 80, mana: 100, damage: 8, defense: 2 },
-    archer: { name: 'Husarz', health: 100, mana: 50, damage: 12, defense: 3 }
+    warrior: { 
+      name: 'Mroczny Rycerz', 
+      health: 120, 
+      mana: 30, 
+      damage: 15, 
+      defense: 5,
+      description: 'Zbrojny w ciemności, gotowy na walkę z potworami z głębin.',
+      quote: '"Ciemność nie jest moim wrogiem - to mój sojusznik."'
+    },
+    mage: { 
+      name: 'Nekromanta', 
+      health: 80, 
+      mana: 100, 
+      damage: 8, 
+      defense: 2,
+      description: 'Mistrz zaklęć śmierci, przywołujący moc z zaświatów.',
+      quote: '"Śmierć to tylko początek nowej mocy."'
+    },
+    archer: { 
+      name: 'Łowca Cieni', 
+      health: 100, 
+      mana: 50, 
+      damage: 12, 
+      defense: 3,
+      description: 'Zwinny zabójca, polujący w ciemnościach na najgroźniejsze bestie.',
+      quote: '"W ciemności widzę wszystko, czego inni nie mogą dostrzec."'
+    }
   };
 
   const enemies = [
@@ -520,7 +561,13 @@ export default function RogueClickerGame() {
     const baseEnemy = enemies[enemyIndex];
     const level = Math.floor((floor + 4) / 5);
     
-    const health = baseEnemy.baseHealth + (level - 1) * 30;
+    // Improved scaling - exponential growth
+    const healthMultiplier = Math.pow(1.15, floor - 1); // 15% increase per floor
+    const health = Math.floor(baseEnemy.baseHealth * healthMultiplier);
+    
+    // Scale rewards with floor
+    const goldMultiplier = 1 + (floor - 1) * 0.1; // 10% increase per floor
+    const expMultiplier = 1 + (floor - 1) * 0.15; // 15% increase per floor
     
     return {
       type: 'enemy',
@@ -530,8 +577,8 @@ export default function RogueClickerGame() {
       level: level,
       enemyType: baseEnemy.type,
       reward: {
-        gold: baseEnemy.goldReward + (level - 1) * 3,
-        exp: baseEnemy.expReward + (level - 1) * 8,
+        gold: Math.floor(baseEnemy.goldReward * goldMultiplier),
+        exp: Math.floor(baseEnemy.expReward * expMultiplier),
         materials: generateMaterialReward(floor)
       }
     };
@@ -596,6 +643,31 @@ export default function RogueClickerGame() {
     }
   }, [gameState.autoClick, gameState.skills.autoClick, gameState.enemy]);
 
+  // Berserk timer countdown
+  useEffect(() => {
+    if (gameState.berserkActive && gameState.berserkTimeLeft > 0) {
+      const timer = setInterval(() => {
+        setGameState(prev => {
+          const newTimeLeft = prev.berserkTimeLeft - 1;
+          if (newTimeLeft <= 0) {
+            return {
+              ...prev,
+              berserkActive: false,
+              berserkTimeLeft: 0,
+              message: 'Berserk się skończył!'
+            };
+          }
+          return {
+            ...prev,
+            berserkTimeLeft: newTimeLeft
+          };
+        });
+      }, 1000);
+      
+      return () => clearInterval(timer);
+    }
+  }, [gameState.berserkActive, gameState.berserkTimeLeft]);
+
   // Obsługa zakończenia ładowania
   const handleLoadingComplete = () => {
     setIsLoading(false);
@@ -612,7 +684,10 @@ export default function RogueClickerGame() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-indigo-900 p-2 sm:p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-red-900 text-white relative overflow-hidden p-2 sm:p-4">
+      {/* Dark Souls Background Effects */}
+      <div className="absolute inset-0 bg-black bg-opacity-50" />
+      <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 via-transparent to-orange-900/20 animate-darkSoulsFlicker" />
       {/* Level Up Notification */}
       <LevelUpNotification 
         levelUp={levelUp} 
@@ -623,6 +698,13 @@ export default function RogueClickerGame() {
       <HelpModal 
         isOpen={showHelp} 
         onClose={() => setShowHelp(false)} 
+      />
+      
+      {/* Reset Confirmation Modal */}
+      <ResetConfirmationModal 
+        isOpen={gameState.showResetModal} 
+        onConfirm={gameActions.confirmReset}
+        onCancel={gameActions.cancelReset}
       />
       
       <div className="max-w-6xl mx-auto">
@@ -654,7 +736,7 @@ export default function RogueClickerGame() {
         {gameState.playerClass && (
           <>
             {/* Nawigacja */}
-            <div className="bg-black bg-opacity-50 rounded-lg p-2 sm:p-4 mb-5">
+            <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 rounded-lg p-2 sm:p-4 mb-5 border-2 border-red-600 animate-darkSoulsRise">
               {/* Główne przyciski nawigacji - responsywne */}
               <div className="flex flex-wrap justify-center gap-1 sm:gap-2 mb-2 sm:mb-0">
                   {[
@@ -672,8 +754,8 @@ export default function RogueClickerGame() {
                       onClick={() => setGameState(prev => ({ ...prev, activeTab: tab.id }))}
                       className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs sm:text-sm animate-slideIn ${
                         gameState.activeTab === tab.id 
-                          ? 'bg-purple-600 text-white animate-glow' 
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white animate-darkSoulsPulse border border-red-400' 
+                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600'
                       }`}
                     >
                       <Icon size={14} className="sm:w-4 sm:h-4" />
@@ -685,23 +767,23 @@ export default function RogueClickerGame() {
               </div>
               
               {/* Przyciski akcji - na dole na małych ekranach, po bokach na większych */}
-              <div className="flex justify-between items-center gap-2">
-                <button
-                  onClick={gameActions.resetGame}
-                  className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-lg flex items-center gap-1 transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs animate-slideInFromLeft"
-                >
-                  <RotateCcw size={12} />
-                  <span className="hidden sm:inline">Reset Gry</span>
-                  <span className="sm:hidden">Reset</span>
-                </button>
-
+              <div className="flex justify-center items-center gap-2 mt-2">
                 <button
                   onClick={gameActions.saveAndExit}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-lg flex items-center gap-1 transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs animate-slideInFromRight"
+                  className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white px-2 py-1 rounded-lg flex items-center gap-1 transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs animate-slideIn border border-red-400 animate-darkSoulsGlow"
                 >
                   <Shield size={12} />
                   <span className="hidden sm:inline">Zapisz i wyjdź</span>
                   <span className="sm:hidden">Zapisz</span>
+                </button>
+
+                <button
+                  onClick={gameActions.resetGame}
+                  className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white px-2 py-1 rounded-lg flex items-center gap-1 transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs animate-slideIn border border-red-400 animate-darkSoulsGlow"
+                >
+                  <RotateCcw size={12} />
+                  <span className="hidden sm:inline">Reset Gry</span>
+                  <span className="sm:hidden">Reset</span>
                 </button>
               </div>
             </div>
@@ -715,11 +797,17 @@ export default function RogueClickerGame() {
 
             {/* Walka z przeciwnikiem - tylko w zakładce game */}
             {gameState.activeTab === 'game' && gameState.enemy && gameState.enemy.type === 'enemy' && (
-              <div className="bg-black bg-opacity-60 rounded-lg p-4 sm:p-8 mb-2 border-2 border-red-500 text-center relative">
+              <div 
+                onClick={gameActions.attackEnemy}
+                className="bg-gradient-to-br from-gray-900 via-black to-red-900 rounded-lg p-4 sm:p-8 mb-2 border-2 border-red-600 text-center relative cursor-pointer hover:bg-opacity-90 transition-all duration-200 animate-darkSoulsGlow hover:animate-darkSoulsPulse"
+              >
                 {/* Przycisk Jak grać? - lewy górny róg */}
                 <button
-                  onClick={() => setShowHelp(true)}
-                  className="absolute top-2 left-2 bg-gray-600 hover:bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center transition-colors text-sm font-bold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowHelp(true);
+                  }}
+                  className="absolute top-2 left-2 bg-gray-600 hover:bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center transition-colors text-sm font-bold z-10"
                   title="Jak grać?"
                 >
                   ?
@@ -756,33 +844,67 @@ export default function RogueClickerGame() {
                     'Auto-klik aktywny!' : 'Kliknij, aby zaatakować!'}
                 </div>
 
-                {/* Normalny atak */}
-                <button
-                  onClick={gameActions.attackEnemy}
-                  disabled={gameState.gameOver}
-                  className="text-4xl sm:text-6xl mb-4 transform hover:scale-110 transition-all duration-200 hover:animate-bounce cursor-pointer animate-float"
-                >
-                  {gameState.enemy.enemyType === 'boss' ? '👹' : 
-                   gameState.enemy.enemyType === 'beast' ? '🐺' :
-                   gameState.enemy.enemyType === 'undead' ? '💀' : '👹'}
-                </button>
+                {/* Animacja walki z potworem */}
+                <div className="relative mb-4 h-20 flex items-center justify-center">
+                  {/* Drzwi krypty (0%) */}
+                  <div className="absolute left-4 text-3xl sm:text-4xl animate-darkSoulsFloat relative">
+                    🚪
+                    {/* Mroczny efekt wokół drzwi */}
+                    <div className="absolute inset-0 bg-gray-500 bg-opacity-30 rounded-full blur-lg animate-darkSoulsFlicker" />
+                  </div>
+                  
+                  {/* Potwór (przesuwa się w zależności od HP) */}
+                  <div 
+                    className="absolute text-4xl sm:text-6xl transform hover:scale-110 transition-all duration-500 hover:animate-bounce animate-darkSoulsFloat"
+                    style={{
+                      left: `${20 + (60 - (gameState.enemy.health / gameState.enemy.maxHealth) * 60)}%`,
+                      transform: 'translateX(-50%)'
+                    }}
+                  >
+                    {gameState.enemy.enemyType === 'boss' ? '👹' : 
+                     gameState.enemy.enemyType === 'beast' ? '🐺' :
+                     gameState.enemy.enemyType === 'undead' ? '💀' : '👹'}
+                    {/* Mroczny efekt wokół potwora */}
+                    <div className="absolute inset-0 bg-red-500 bg-opacity-20 rounded-full blur-xl animate-darkSoulsFlicker" />
+                    {/* Efekt "ciągnięcia" w kierunku czaszki */}
+                    {gameState.enemy.health < gameState.enemy.maxHealth * 0.5 && (
+                      <div className="absolute -right-8 top-1/2 transform -translate-y-1/2 text-red-500 text-2xl animate-darkSoulsFloat">
+                        👻
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Czaszka (100%) */}
+                  <div className="absolute right-4 text-3xl sm:text-4xl animate-darkSoulsFloat relative">
+                    💀
+                    {/* Mroczny efekt wokół czaszki */}
+                    <div className="absolute inset-0 bg-red-500 bg-opacity-40 rounded-full blur-lg animate-darkSoulsFlicker" />
+                  </div>
+                </div>
 
-                <div className="text-white text-sm sm:text-base mb-4">
-                  ⚔️ Normalny Atak ({gameState.clickDamage} obrażeń)
+                {/* Wartość ataku */}
+                <div className="text-white text-sm sm:text-base mb-4 font-bold">
+                  ⚔️ Atak: {gameState.clickDamage} obrażeń
                 </div>
 
                 {/* Umiejętności specjalne */}
-                <div className="border-t border-gray-600 pt-4">
+                <div 
+                  onClick={gameActions.attackEnemy}
+                  className="border-t border-red-600 pt-4 cursor-pointer hover:bg-red-900 hover:bg-opacity-30 rounded-lg transition-all duration-200 animate-darkSoulsRise"
+                >
                   <div className="text-white text-sm sm:text-base mb-2">Umiejętności specjalne:</div>
                   <div className="flex justify-center gap-1 sm:gap-2 flex-wrap">
                     {gameState.playerClass === 'mage' && gameState.skills.fireball > 0 && (
                       <button
-                        onClick={() => gameActions.useSkill('fireball')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          gameActions.useSkill('fireball');
+                        }}
                         disabled={gameState.mana < 15}
                         className={`px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                           gameState.mana >= 15 
-                            ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' 
-                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                            ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white animate-darkSoulsPulse border border-red-400' 
+                            : 'bg-gray-800 text-gray-400 cursor-not-allowed border border-gray-600'
                         }`}
                       >
                         🔥 Kula Ognia<br/>
@@ -791,12 +913,15 @@ export default function RogueClickerGame() {
                     )}
                     {gameState.skills.heal > 0 && (
                       <button
-                        onClick={() => gameActions.useSkill('heal')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          gameActions.useSkill('heal');
+                        }}
                         disabled={gameState.mana < 10}
                         className={`px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                           gameState.mana >= 10 
-                            ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse' 
-                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                            ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white animate-darkSoulsPulse border border-green-400' 
+                            : 'bg-gray-800 text-gray-400 cursor-not-allowed border border-gray-600'
                         }`}
                       >
                         ❤️ Leczenie<br/>
@@ -805,7 +930,10 @@ export default function RogueClickerGame() {
                     )}
                     {gameState.playerClass === 'archer' && gameState.skills.powerShot > 0 && (
                       <button
-                        onClick={() => gameActions.useSkill('powerShot')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          gameActions.useSkill('powerShot');
+                        }}
                         disabled={gameState.mana < 20}
                         className={`px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                           gameState.mana >= 20 
@@ -819,7 +947,10 @@ export default function RogueClickerGame() {
                     )}
                     {gameState.skills.lightning > 0 && (
                       <button
-                        onClick={() => gameActions.useSkill('lightning')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          gameActions.useSkill('lightning');
+                        }}
                         disabled={gameState.mana < 25}
                         className={`px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                           gameState.mana >= 25 
@@ -831,6 +962,23 @@ export default function RogueClickerGame() {
                         <small>({35 * gameState.skills.lightning} DMG, 25 MP)</small>
                       </button>
                     )}
+                    {gameState.skills.berserker > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          gameActions.activateBerserk();
+                        }}
+                        disabled={gameState.berserkActive}
+                        className={`px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 ${
+                          !gameState.berserkActive 
+                            ? 'bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white animate-darkSoulsGlow border border-red-400' 
+                            : 'bg-gray-800 text-gray-400 cursor-not-allowed border border-gray-600'
+                        }`}
+                      >
+                        ⚔️ Berserk<br/>
+                        <small>({gameState.berserkActive ? `${gameState.berserkTimeLeft}s` : 'Aktywuj'})</small>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -838,7 +986,7 @@ export default function RogueClickerGame() {
 
             {/* Event - tylko w zakładce game */}
             {gameState.activeTab === 'game' && gameState.enemy && gameState.enemy.type === 'event' && (
-              <div className="bg-black bg-opacity-60 rounded-lg p-8 mb-5 border-2 border-yellow-500 text-center">
+              <div className="bg-gradient-to-br from-gray-900 via-black to-yellow-900 rounded-lg p-8 mb-5 border-2 border-yellow-600 text-center animate-darkSoulsRise">
                 <h3 className="text-2xl font-bold text-white mb-4">
                   {gameState.enemy.name}
                 </h3>
@@ -857,25 +1005,25 @@ export default function RogueClickerGame() {
 
             {/* Sklep */}
             {gameState.activeTab === 'shop' && (
-              <div className="bg-black bg-opacity-60 rounded-lg p-4 sm:p-6">
+              <div className="bg-gradient-to-br from-gray-900 via-black to-red-900 rounded-lg p-4 sm:p-6 border-2 border-red-600 animate-darkSoulsRise">
                 <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-5 text-center">🏪 Sklep Mikstur</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   {shopItems.map((item, index) => (
-                    <div key={item.id} className="bg-gray-800 p-4 rounded-lg border border-gray-600 animate-slideIn" style={{ animationDelay: `${index * 0.1}s` }}>
-                      <h3 className="font-bold text-white mb-2">{item.name}</h3>
+                    <div key={item.id} className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg border border-red-600 animate-darkSoulsRise" style={{ animationDelay: `${index * 0.1}s` }}>
+                      <h3 className="font-bold text-white mb-2 animate-darkSoulsGlow">{item.name}</h3>
                       <p className="text-gray-300 text-sm mb-2">
                         +{item.value} {item.effect === 'health' ? 'HP' : 
                                       item.effect === 'mana' ? 'MP' :
                                       item.effect === 'damage' ? 'Siły' : 'Obrony'}
                       </p>
-                      <div className="text-yellow-400 mb-3">💰 {item.cost} złota</div>
+                      <div className="text-yellow-400 mb-3 font-bold">💰 {item.cost} złota</div>
                       <button
                         onClick={() => gameActions.buyItem(item)}
                         disabled={gameState.gold < item.cost}
                         className={`w-full px-4 py-2 rounded text-sm font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                           gameState.gold >= item.cost
-                            ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse'
-                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                            ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white animate-darkSoulsPulse border border-green-400'
+                            : 'bg-gray-800 text-gray-400 cursor-not-allowed border border-gray-600'
                         }`}
                       >
                         Kup
@@ -888,11 +1036,11 @@ export default function RogueClickerGame() {
 
             {/* Ekwipunek */}
             {gameState.activeTab === 'inventory' && (
-              <div className="bg-black bg-opacity-60 rounded-lg p-4 sm:p-6">
+              <div className="bg-gradient-to-br from-gray-900 via-black to-blue-900 rounded-lg p-4 sm:p-6 border-2 border-blue-600 animate-darkSoulsRise">
                 <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-5 text-center">🎒 Ekwipunek</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  <div className="bg-gray-800 p-4 rounded-lg animate-slideInFromLeft">
-                    <h3 className="font-bold text-white mb-3">⚔️ Broń</h3>
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg border border-red-600 animate-darkSoulsRise">
+                    <h3 className="font-bold text-white mb-3 animate-darkSoulsGlow">⚔️ Broń</h3>
                     {gameState.inventory.weapon ? (
                       <div className="text-white">
                         <p className="font-bold">{gameState.inventory.weapon.name}</p>
@@ -913,8 +1061,8 @@ export default function RogueClickerGame() {
                       <p className="text-gray-400">Brak</p>
                     )}
                   </div>
-                  <div className="bg-gray-800 p-4 rounded-lg animate-slideIn" style={{ animationDelay: '0.2s' }}>
-                    <h3 className="font-bold text-white mb-3">🛡️ Zbroja</h3>
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg border border-red-600 animate-darkSoulsRise" style={{ animationDelay: '0.2s' }}>
+                    <h3 className="font-bold text-white mb-3 animate-darkSoulsGlow">🛡️ Zbroja</h3>
                     {gameState.inventory.armor ? (
                       <div className="text-white">
                         <p className="font-bold">{gameState.inventory.armor.name}</p>
@@ -935,8 +1083,8 @@ export default function RogueClickerGame() {
                       <p className="text-gray-400">Brak</p>
                     )}
                   </div>
-                  <div className="bg-gray-800 p-4 rounded-lg animate-slideInFromRight" style={{ animationDelay: '0.4s' }}>
-                    <h3 className="font-bold text-white mb-3">💍 Akcesoria</h3>
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg border border-red-600 animate-darkSoulsRise" style={{ animationDelay: '0.4s' }}>
+                    <h3 className="font-bold text-white mb-3 animate-darkSoulsGlow">💍 Akcesoria</h3>
                     {gameState.inventory.accessory ? (
                       <div className="text-white">
                         <p className="font-bold">{gameState.inventory.accessory.name}</p>

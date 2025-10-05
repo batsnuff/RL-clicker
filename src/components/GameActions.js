@@ -8,7 +8,7 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     setGameState(prev => ({
       ...prev,
       playerClass: className,
-      playerName: playerName || `Gracz ${className}`,
+      playerName: playerName || 'Przydupas',
       maxHealth: selectedClassData.health + (prev.prestigeLevel * 20),
       health: selectedClassData.health + (prev.prestigeLevel * 20),
       maxMana: selectedClassData.mana + (prev.prestigeLevel * 10),
@@ -24,10 +24,21 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
   const calculateDamage = () => {
     let damage = gameState.clickDamage;
     
+    // Bonus z prestige
+    if (gameState.prestigeLevel > 0) {
+      damage = Math.floor(damage * (1 + gameState.prestigeBonus / 100));
+    }
+    
     // Bonus z ekwipunku
     if (gameState.inventory.weapon) damage += gameState.inventory.weapon.damage || 0;
-    if (gameState.inventory.weapon && gameState.inventory.weapon.bonus && gameState.inventory.weapon.bonus.type === 'damage') {
-      damage += gameState.inventory.weapon.bonus.value;
+    if (gameState.inventory.weapon && gameState.inventory.weapon.bonus && gameState.inventory.weapon.bonus.damage) {
+      damage += gameState.inventory.weapon.bonus.damage;
+    }
+    
+    // Bonus z berserk
+    if (gameState.berserkActive) {
+      const berserkBonus = 50 + (gameState.skills.berserker * 25); // 50% + 25% per level
+      damage = Math.floor(damage * (1 + berserkBonus / 100));
     }
     
     // Krytyczne trafienie
@@ -35,8 +46,12 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     if (gameState.inventory.accessory && gameState.inventory.accessory.critChance) {
       critChance += gameState.inventory.accessory.critChance;
     }
-    if (gameState.inventory.weapon && gameState.inventory.weapon.bonus && gameState.inventory.weapon.bonus.type === 'critChance') {
-      critChance += gameState.inventory.weapon.bonus.value;
+    if (gameState.inventory.weapon && gameState.inventory.weapon.bonus && gameState.inventory.weapon.bonus.critChance) {
+      critChance += gameState.inventory.weapon.bonus.critChance;
+    }
+    // Bonus z criticalMastery
+    if (gameState.skills.criticalMastery > 0) {
+      critChance += gameState.skills.criticalMastery * 3;
     }
     
     if (Math.random() * 100 < critChance) {
@@ -57,14 +72,31 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
       
       if (newEnemyHealth <= 0) {
         // Przeciwnik pokonany
-        const newGold = prev.gold + prev.enemy.reward.gold;
-        let newExp = prev.experience + prev.enemy.reward.exp;
+        let goldMultiplier = 1;
+        let expMultiplier = 1;
+        let materialMultiplier = 1;
+        
+        // Bonusy ze skili
+        if (prev.skills.goldRush > 0) {
+          goldMultiplier += prev.skills.goldRush * 0.15; // 15% per level
+        }
+        if (prev.skills.experienceBoost > 0) {
+          expMultiplier += prev.skills.experienceBoost * 0.10; // 10% per level
+        }
+        if (prev.skills.materialMagnet > 0) {
+          materialMultiplier += prev.skills.materialMagnet * 0.20; // 20% per level
+        }
+        
+        const newGold = prev.gold + Math.floor(prev.enemy.reward.gold * goldMultiplier);
+        let newExp = prev.experience + Math.floor(prev.enemy.reward.exp * expMultiplier);
         const newFloor = prev.floor + 1;
         
-        // Dodanie materiałów
+        // Dodanie materiałów z bonusem
         const newMaterials = { ...prev.materials };
         Object.keys(prev.enemy.reward.materials).forEach(material => {
-          newMaterials[material] = (newMaterials[material] || 0) + prev.enemy.reward.materials[material];
+          const baseAmount = prev.enemy.reward.materials[material];
+          const bonusAmount = Math.floor(baseAmount * materialMultiplier);
+          newMaterials[material] = (newMaterials[material] || 0) + bonusAmount;
         });
         
         // Sprawdzenie awansu
@@ -112,6 +144,15 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
           regenMessage = ` 🌟 Regeneracja! +${regenAmount} HP!`;
         }
         
+        // Regeneracja ze skilla healthRegen
+        if (prev.skills.healthRegen > 0) {
+          const healthRegenAmount = prev.skills.healthRegen;
+          newHealth = Math.min(newMaxHealth, newHealth + healthRegenAmount);
+          if (healthRegenAmount > 0) {
+            regenMessage += ` 💚 +${healthRegenAmount} HP (regen)!`;
+          }
+        }
+        
         const newState = {
           ...prev,
           gold: newGold,
@@ -136,14 +177,16 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
         
         return newState;
       } else {
-        // Przeciwnik kontratakuje
-        let enemyDamage = Math.max(1, Math.floor(prev.enemy.level * (Math.random() * 2 + 1)));
+        // Przeciwnik kontratakuje - improved scaling
+        const baseDamage = Math.max(1, Math.floor(prev.enemy.level * (Math.random() * 2 + 1)));
+        const floorMultiplier = 1 + (prev.floor - 1) * 0.05; // 5% increase per floor
+        let enemyDamage = Math.floor(baseDamage * floorMultiplier);
         
         // Obrona
         let totalDefense = prev.defense;
         if (prev.inventory.armor) totalDefense += prev.inventory.armor.defense || 0;
-        if (prev.inventory.armor && prev.inventory.armor.bonus && prev.inventory.armor.bonus.type === 'defense') {
-          totalDefense += prev.inventory.armor.bonus.value;
+        if (prev.inventory.armor && prev.inventory.armor.bonus && prev.inventory.armor.bonus.defense) {
+          totalDefense += prev.inventory.armor.bonus.defense;
         }
         
         enemyDamage = Math.max(1, enemyDamage - totalDefense);
@@ -240,6 +283,25 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     });
   };
 
+  // Aktywacja berserk
+  const activateBerserk = () => {
+    if (gameState.gameOver || gameState.skills.berserker === 0) return;
+    
+    setGameState(prev => {
+      if (prev.berserkActive) {
+        return { ...prev, message: 'Berserk już aktywny!' };
+      }
+      
+      const duration = 10 + (prev.skills.berserker * 5) + (prev.skills.berserkRage * 2); // 10 + 5*level + 2*rage sekund
+      return {
+        ...prev,
+        berserkActive: true,
+        berserkTimeLeft: duration,
+        message: `Berserk aktywowany na ${duration} sekund!`
+      };
+    });
+  };
+
   // Toggle auto-click
   const toggleAutoClick = () => {
     setGameState(prev => ({
@@ -325,7 +387,9 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
       fireball: 1, heal: 1, criticalStrike: 1,
       armor: 7, powerShot: 7, manaShield: 7,
       lightning: 14, regeneration: 14, berserker: 14,
-      autoClick: 21, teleport: 21, divine: 21
+      autoClick: 21, teleport: 21, divine: 21,
+      berserkRage: 21, materialMagnet: 21, goldRush: 21,
+      experienceBoost: 21, criticalMastery: 21, healthRegen: 21
     };
     
     if (gameState.level < skillRequirements[skillName]) return;
@@ -360,39 +424,82 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
         newMaterials[material] -= amount;
       }
       
-      // Wygeneruj bonus
-      const bonus = generateRandomBonus();
+      // Sprawdź czy to upgrade istniejącego przedmiotu
+      const existingItem = newInventory[recipe.type];
+      let craftedItem;
       
-      // Dodaj przedmiot w zależności od typu
-      const craftedItem = {
-        id: recipe.id,
-        name: `${recipe.name} ${bonus.name}`,
-        bonus: bonus
-      };
-      
-      // Dodaj właściwości w zależności od typu
-      if (recipe.type === 'weapon') {
-        craftedItem.damage = recipe.baseDamage;
-        if (recipe.baseMana) craftedItem.mana = recipe.baseMana;
-        if (recipe.baseCritChance) craftedItem.critChance = recipe.baseCritChance;
-        newInventory.weapon = craftedItem;
-      } else if (recipe.type === 'armor') {
-        craftedItem.defense = recipe.baseDefense;
-        if (recipe.baseMana) craftedItem.mana = recipe.baseMana;
-        if (recipe.baseCritChance) craftedItem.critChance = recipe.baseCritChance;
-        newInventory.armor = craftedItem;
-      } else if (recipe.type === 'accessory') {
-        craftedItem.mana = recipe.baseMana;
-        craftedItem.critChance = recipe.baseCritChance;
-        newInventory.accessory = craftedItem;
+      if (existingItem && existingItem.id === recipe.id && existingItem.upgradeLevel < 5) {
+        // Upgrade istniejącego przedmiotu
+        const upgradeLevel = (existingItem.upgradeLevel || 0) + 1;
+        const randomBonus = generateRandomBonus();
+        
+        craftedItem = {
+          ...existingItem,
+          upgradeLevel: upgradeLevel,
+          name: `${recipe.name} +${upgradeLevel}`,
+          bonus: {
+            ...existingItem.bonus,
+            [randomBonus.type]: (existingItem.bonus[randomBonus.type] || 0) + randomBonus.value
+          }
+        };
+        
+        // Dodaj właściwości w zależności od typu
+        if (recipe.type === 'weapon') {
+          craftedItem.damage = recipe.baseDamage + Math.floor(upgradeLevel * 2);
+          if (recipe.baseMana) craftedItem.mana = recipe.baseMana + Math.floor(upgradeLevel * 1);
+          if (recipe.baseCritChance) craftedItem.critChance = recipe.baseCritChance + Math.floor(upgradeLevel * 0.5);
+        } else if (recipe.type === 'armor') {
+          craftedItem.defense = recipe.baseDefense + Math.floor(upgradeLevel * 2);
+          if (recipe.baseMana) craftedItem.mana = recipe.baseMana + Math.floor(upgradeLevel * 1);
+          if (recipe.baseCritChance) craftedItem.critChance = recipe.baseCritChance + Math.floor(upgradeLevel * 0.5);
+        } else if (recipe.type === 'accessory') {
+          if (recipe.baseMana) craftedItem.mana = recipe.baseMana + Math.floor(upgradeLevel * 2);
+          if (recipe.baseCritChance) craftedItem.critChance = recipe.baseCritChance + Math.floor(upgradeLevel * 1);
+        }
+        
+        newInventory[recipe.type] = craftedItem;
+        
+        return {
+          ...prev,
+          materials: newMaterials,
+          inventory: newInventory,
+          message: `Ulepszyłeś ${craftedItem.name}! +${randomBonus.value} ${randomBonus.name}!`
+        };
+      } else {
+        // Nowy przedmiot
+        const bonus = generateRandomBonus();
+        
+        craftedItem = {
+          id: recipe.id,
+          name: recipe.name,
+          upgradeLevel: 0,
+          bonus: { [bonus.type]: bonus.value }
+        };
+        
+        // Dodaj właściwości w zależności od typu
+        if (recipe.type === 'weapon') {
+          craftedItem.damage = recipe.baseDamage;
+          if (recipe.baseMana) craftedItem.mana = recipe.baseMana;
+          if (recipe.baseCritChance) craftedItem.critChance = recipe.baseCritChance;
+          newInventory.weapon = craftedItem;
+        } else if (recipe.type === 'armor') {
+          craftedItem.defense = recipe.baseDefense;
+          if (recipe.baseMana) craftedItem.mana = recipe.baseMana;
+          if (recipe.baseCritChance) craftedItem.critChance = recipe.baseCritChance;
+          newInventory.armor = craftedItem;
+        } else if (recipe.type === 'accessory') {
+          craftedItem.mana = recipe.baseMana;
+          craftedItem.critChance = recipe.baseCritChance;
+          newInventory.accessory = craftedItem;
+        }
+        
+        return {
+          ...prev,
+          materials: newMaterials,
+          inventory: newInventory,
+          message: `Wytworzyłeś ${craftedItem.name} z bonusem +${bonus.value} ${bonus.name}!`
+        };
       }
-      
-      return {
-        ...prev,
-        materials: newMaterials,
-        inventory: newInventory,
-        message: `Wytworzyłeś ${craftedItem.name} z bonusem +${bonus.value} ${bonus.name}!`
-      };
     });
   };
 
@@ -421,7 +528,7 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
       prestigeBonus: newPrestigeBonus,
       autoClick: false,
       inventory: { weapon: null, armor: null, accessory: null },
-      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0 },
+      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0, berserkRage: 0, materialMagnet: 0, goldRush: 0, experienceBoost: 0, criticalMastery: 0, healthRegen: 0 },
       materials: { wood: 0, iron: 0, steel: 0, mithril: 0, adamant: 0, gems: 0, essence: 0 },
       message: `Prestige! Zaczynasz od nowa z bonusami! +${newPrestigeBonus}% ataku!`,
       activeTab: 'game'
@@ -482,7 +589,7 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     }
   };
 
-  // Przetwarzanie materiałów
+  // Przetwarzanie materiałów na złoto
   const processMaterials = (conversionType, material, quantity) => {
     if (quantity <= 0 || !gameState.materials[material] || gameState.materials[material] < quantity) {
       setGameState(prev => ({ ...prev, message: 'Niewystarczająco materiałów!' }));
@@ -494,53 +601,22 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
       let newGold = prev.gold;
       let message = '';
 
-      if (conversionType === 'upgrade') {
-        // Ulepszanie materiałów
-        const materialTiers = ['wood', 'iron', 'steel', 'mithril', 'adamant'];
-        const currentTierIndex = materialTiers.indexOf(material);
-        
-        if (currentTierIndex === -1 || currentTierIndex === materialTiers.length - 1) {
-          return { ...prev, message: 'Nie można ulepszyć tego materiału!' };
-        }
+      // Konwersja na złoto z lepszymi kursami
+      const goldRates = {
+        wood: 5,      // Increased from 2
+        iron: 12,     // Increased from 5
+        steel: 30,    // Increased from 12
+        mithril: 75,  // Increased from 30
+        adamant: 200, // Increased from 75
+        gems: 40,     // Increased from 15
+        essence: 150  // Increased from 50
+      };
 
-        const nextTier = materialTiers[currentTierIndex + 1];
-        const conversionRates = {
-          wood: { iron: 3, steel: 8, mithril: 20, adamant: 50 },
-          iron: { steel: 3, mithril: 8, adamant: 20 },
-          steel: { mithril: 3, adamant: 8 },
-          mithril: { adamant: 3 }
-        };
-
-        const rate = conversionRates[material][nextTier];
-        const maxUpgrades = Math.floor(quantity / rate);
-        
-        if (maxUpgrades === 0) {
-          return { ...prev, message: 'Niewystarczająco materiałów do ulepszenia!' };
-        }
-
-        const materialsUsed = maxUpgrades * rate;
-        newMaterials[material] -= materialsUsed;
-        newMaterials[nextTier] = (newMaterials[nextTier] || 0) + maxUpgrades;
-        
-        message = `Ulepszono ${materialsUsed} ${materialNames[material]} na ${maxUpgrades} ${materialNames[nextTier]}!`;
-      } else if (conversionType === 'gold') {
-        // Konwersja na złoto
-        const goldRates = {
-          wood: 2,
-          iron: 5,
-          steel: 12,
-          mithril: 30,
-          adamant: 75,
-          gems: 15,
-          essence: 50
-        };
-
-        const goldGained = quantity * goldRates[material];
-        newMaterials[material] -= quantity;
-        newGold += goldGained;
-        
-        message = `Zamieniono ${quantity} ${materialNames[material]} na ${goldGained} złota!`;
-      }
+      const goldGained = quantity * goldRates[material];
+      newMaterials[material] -= quantity;
+      newGold += goldGained;
+      
+      message = `Zamieniono ${quantity} ${materialNames[material]} na ${goldGained} złota!`;
 
       return {
         ...prev,
@@ -551,8 +627,16 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     });
   };
 
-  // Reset gry
+  // Reset gry - teraz tylko ustawia flagę do pokazania modala
   const resetGame = () => {
+    setGameState(prev => ({
+      ...prev,
+      showResetModal: true
+    }));
+  };
+
+  // Potwierdzenie resetu
+  const confirmReset = () => {
     setGameState(prev => ({
       level: 1,
       health: 100,
@@ -574,10 +658,70 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
       prestigeLevel: 0,
       prestigeBonus: 0,
       autoClick: false,
+      berserkActive: false,
+      berserkTimeLeft: 0,
       inventory: { weapon: null, armor: null, accessory: null },
-      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0 },
+      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0, berserkRage: 0, materialMagnet: 0, goldRush: 0, experienceBoost: 0, criticalMastery: 0, healthRegen: 0 },
       materials: { wood: 0, iron: 0, steel: 0, mithril: 0, adamant: 0, gems: 0, essence: 0 },
-      highScores: prev.highScores // Zachowaj high scores
+      highScores: prev.highScores, // Zachowaj high scores
+      showResetModal: false
+    }));
+  };
+
+  // Anulowanie resetu
+  const cancelReset = () => {
+    setGameState(prev => ({
+      ...prev,
+      showResetModal: false
+    }));
+  };
+
+  // Pokazanie modala wyjścia
+  const showExitModal = () => {
+    setGameState(prev => ({
+      ...prev,
+      showExitModal: true
+    }));
+  };
+
+  // Powrót do gry
+  const returnToGame = () => {
+    setGameState(prev => ({
+      ...prev,
+      showExitModal: false
+    }));
+  };
+
+  // Porzucenie gry (wyjście bez zapisu)
+  const abandonGame = () => {
+    setGameState(prev => ({
+      level: 1,
+      health: 100,
+      maxHealth: 100,
+      mana: 50,
+      maxMana: 50,
+      gold: 50,
+      experience: 0,
+      experienceToNext: 100,
+      clickDamage: 10,
+      defense: 0,
+      critChance: 5,
+      playerClass: null,
+      enemy: null,
+      floor: 1,
+      gameOver: false,
+      message: 'Witaj w Rogue Clicker! Wybierz klasę postaci.',
+      activeTab: 'game',
+      prestigeLevel: 0,
+      prestigeBonus: 0,
+      autoClick: false,
+      berserkActive: false,
+      berserkTimeLeft: 0,
+      inventory: { weapon: null, armor: null, accessory: null },
+      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0, berserkRage: 0, materialMagnet: 0, goldRush: 0, experienceBoost: 0, criticalMastery: 0, healthRegen: 0 },
+      materials: { wood: 0, iron: 0, steel: 0, mithril: 0, adamant: 0, gems: 0, essence: 0 },
+      highScores: prev.highScores, // Zachowaj high scores
+      showExitModal: false
     }));
   };
 
@@ -585,6 +729,7 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     selectClass,
     attackEnemy,
     useSkill,
+    activateBerserk,
     toggleAutoClick,
     handleEvent,
     buyItem,
@@ -593,6 +738,11 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     processMaterials,
     prestige,
     resetGame,
+    confirmReset,
+    cancelReset,
+    showExitModal,
+    returnToGame,
+    abandonGame,
     saveGame,
     loadGame,
     saveAndExit

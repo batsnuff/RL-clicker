@@ -14,37 +14,37 @@ export default function CraftingTab({ gameState, gameActions, materialNames, get
   });
 
   return (
-    <div className="bg-black bg-opacity-60 rounded-lg p-6">
-      <h2 className="text-2xl font-bold text-white mb-6 text-center">🔨 Craftowanie</h2>
+    <div className="bg-gradient-to-br from-gray-900 via-black to-red-900 rounded-lg p-6 border-2 border-red-600 animate-darkSoulsRise">
+      <h2 className="text-2xl font-bold text-white mb-6 text-center animate-darkSoulsGlow">🔨 Craftowanie</h2>
       
       {/* Kategorie ekwipunku */}
       <div className="flex justify-center gap-4 mb-6">
         <button
           onClick={() => setCraftingCategory('weapon')}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 transform hover:scale-105 active:scale-95 ${
             craftingCategory === 'weapon'
-              ? 'bg-purple-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white animate-darkSoulsPulse border border-red-400'
+              : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600'
           }`}
         >
           ⚔️ Broń
         </button>
         <button
           onClick={() => setCraftingCategory('armor')}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 transform hover:scale-105 active:scale-95 ${
             craftingCategory === 'armor'
-              ? 'bg-purple-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white animate-darkSoulsPulse border border-blue-400'
+              : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600'
           }`}
         >
           🛡️ Zbroja
         </button>
         <button
           onClick={() => setCraftingCategory('accessory')}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 transform hover:scale-105 active:scale-95 ${
             craftingCategory === 'accessory'
-              ? 'bg-purple-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white animate-darkSoulsPulse border border-purple-400'
+              : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600'
           }`}
         >
           💍 Akcesoria
@@ -63,7 +63,7 @@ export default function CraftingTab({ gameState, gameActions, materialNames, get
           const tierUnlocked = gameState.floor >= (filteredRecipes.indexOf(recipe) * 30);
           
           return (
-            <div key={recipe.id} className={`bg-gray-800 p-4 rounded-lg border border-gray-600 ${!tierUnlocked ? 'opacity-50' : ''}`}>
+            <div key={recipe.id} className={`bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg border border-red-600 animate-darkSoulsRise ${!tierUnlocked ? 'opacity-50' : ''}`}>
               <h3 className="font-bold text-white mb-2">
                 {recipe.type === 'weapon' && '⚔️ '}
                 {recipe.type === 'armor' && '🛡️ '}
@@ -120,10 +120,10 @@ export default function CraftingTab({ gameState, gameActions, materialNames, get
               <button
                 onClick={() => gameActions.craftItem(recipe)}
                 disabled={!canCraft || !tierUnlocked}
-                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                className={`w-full px-4 py-2 rounded text-sm font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                   canCraft && tierUnlocked
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white animate-darkSoulsPulse border border-blue-400'
+                    : 'bg-gray-800 text-gray-400 cursor-not-allowed border border-gray-600'
                 }`}
               >
                 Wytwórz

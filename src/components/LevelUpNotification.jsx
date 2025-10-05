@@ -7,16 +7,16 @@ export default function LevelUpNotification({ levelUp, onClose }) {
   useEffect(() => {
     if (levelUp) {
       setIsVisible(true);
-      setAnimationClass('animate-bounce');
+      setAnimationClass('animate-slideInFromTop');
       
-      // Auto-hide after 4 seconds
+      // Auto-hide after 5 seconds
       const timer = setTimeout(() => {
         setAnimationClass('animate-fadeOut');
         setTimeout(() => {
           setIsVisible(false);
           onClose();
         }, 500);
-      }, 4000);
+      }, 5000);
 
       return () => clearTimeout(timer);
     }
@@ -26,9 +26,23 @@ export default function LevelUpNotification({ levelUp, onClose }) {
 
   const { newLevel, statGains } = levelUp;
 
+  const handleClose = () => {
+    setAnimationClass('animate-fadeOut');
+    setTimeout(() => {
+      setIsVisible(false);
+      onClose();
+    }, 500);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-      <div className={`bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 rounded-2xl p-8 shadow-2xl border-4 border-yellow-300 transform ${animationClass} pointer-events-auto`}>
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      onClick={handleClose}
+    >
+      <div 
+        className={`bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 rounded-2xl p-8 shadow-2xl border-4 border-yellow-300 transform ${animationClass}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="text-center">
           {/* Tytuł Level Up */}
           <div className="text-6xl mb-4 animate-pulse">🎉</div>
@@ -64,13 +78,7 @@ export default function LevelUpNotification({ levelUp, onClose }) {
 
           {/* Przycisk zamknięcia */}
           <button
-            onClick={() => {
-              setAnimationClass('animate-fadeOut');
-              setTimeout(() => {
-                setIsVisible(false);
-                onClose();
-              }, 500);
-            }}
+            onClick={handleClose}
             className="bg-yellow-700 hover:bg-yellow-800 text-white px-6 py-2 rounded-lg font-bold transition-colors"
           >
             Kontynuuj

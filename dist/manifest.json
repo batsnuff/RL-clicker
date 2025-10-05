@@ -1,11 +1,11 @@
 {
-  "name": "Rogue Clicker RPG",
-  "short_name": "Rogue Clicker",
-  "description": "Nowoczesna gra przeglądarkowa Rogue Clicker RPG z systemem walki, umiejętności i craftowania",
+  "name": "The Darker Clicker",
+  "short_name": "Darker Clicker",
+  "description": "Mroczna gra przeglądarkowa The Darker Clicker z systemem walki, umiejętności i craftowania w klimacie Dark Souls",
   "start_url": "/RL-clicker/",
   "display": "standalone",
-  "background_color": "#1e1b4b",
-  "theme_color": "#7c3aed",
+  "background_color": "#000000",
+  "theme_color": "#EF4444",
   "orientation": "portrait-primary",
   "scope": "/RL-clicker/",
   "icons": [
