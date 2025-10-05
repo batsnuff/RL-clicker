@@ -5,53 +5,86 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
   // Wybór klasy
   const selectClass = (className, playerName = '') => {
     const selectedClassData = classes[className];
+    
+    // Ustaw umiejętności na podstawie klasy
+    let initialSkills = { 
+      // Podstawowe - resetowane
+      fireball: 0, heal: 0, criticalStrike: 0, 
+      // Poziom 7 - resetowane
+      armor: 0, powerShot: 0, manaShield: 0, skeletonSummon: 0, darkStrike: 0,
+      // Poziom 14 - resetowane
+      lightning: 0, regeneration: 0, berserker: 0, deathCurse: 0, hellfire: 0,
+      // Poziom 21 - ZACHOWANE (użyteczne)
+      autoClick: gameState.skills.autoClick, teleport: 0, divine: 0,
+      berserkRage: gameState.skills.berserkRage, materialMagnet: gameState.skills.materialMagnet, 
+      goldRush: gameState.skills.goldRush, experienceBoost: gameState.skills.experienceBoost, 
+      criticalMastery: gameState.skills.criticalMastery, healthRegen: gameState.skills.healthRegen
+    };
+    
+    // Nekromanta zaczyna z umiejętnością leczenia
+    if (className === 'mage') {
+      initialSkills.heal = 1;
+    }
+    
     setGameState(prev => ({
       ...prev,
       playerClass: className,
-      playerName: playerName || 'Przydupas',
+      playerName: playerName || 'bezimienny Pomiot',
       maxHealth: selectedClassData.health + (prev.prestigeLevel * 20),
       health: selectedClassData.health + (prev.prestigeLevel * 20),
       maxMana: selectedClassData.mana + (prev.prestigeLevel * 10),
       mana: selectedClassData.mana + (prev.prestigeLevel * 10),
       clickDamage: selectedClassData.damage + (prev.prestigeLevel * 5) + Math.floor(selectedClassData.damage * prev.prestigeBonus / 100),
       defense: selectedClassData.defense + prev.prestigeLevel,
+      skills: initialSkills,
       enemy: generateEnemy(1),
-      message: ''
+      message: className === 'mage' ? 'Nekromanta zaczyna z umiejętnością leczenia!' : ''
     }));
   };
 
   // Obliczanie obrażeń
-  const calculateDamage = () => {
-    let damage = gameState.clickDamage;
+  const calculateDamage = (state = gameState) => {
+    let damage = state.clickDamage;
     
     // Bonus z prestige
-    if (gameState.prestigeLevel > 0) {
-      damage = Math.floor(damage * (1 + gameState.prestigeBonus / 100));
+    if (state.prestigeLevel > 0) {
+      damage = Math.floor(damage * (1 + state.prestigeBonus / 100));
     }
     
     // Bonus z ekwipunku
-    if (gameState.inventory.weapon) damage += gameState.inventory.weapon.damage || 0;
-    if (gameState.inventory.weapon && gameState.inventory.weapon.bonus && gameState.inventory.weapon.bonus.damage) {
-      damage += gameState.inventory.weapon.bonus.damage;
+    if (state.inventory.weapon) {
+      damage += state.inventory.weapon.damage || 0;
+      // Bonus z ulepszeń broni (atak w skali 5 ulepszeń)
+      if (state.inventory.weapon.upgradeLevel > 0) {
+        damage += state.inventory.weapon.upgradeLevel * 5;
+      }
+    }
+    if (state.inventory.weapon && state.inventory.weapon.bonus && state.inventory.weapon.bonus.damage) {
+      damage += state.inventory.weapon.bonus.damage;
+    }
+    
+    // Pasywne bonusy z ascended broni
+    if (state.passiveBonuses && state.passiveBonuses.weaponDamage > 0) {
+      damage += state.passiveBonuses.weaponDamage;
     }
     
     // Bonus z berserk
-    if (gameState.berserkActive) {
-      const berserkBonus = 50 + (gameState.skills.berserker * 25); // 50% + 25% per level
+    if (state.berserkActive) {
+      const berserkBonus = 50 + (state.skills.berserker * 25); // 50% + 25% per level
       damage = Math.floor(damage * (1 + berserkBonus / 100));
     }
     
     // Krytyczne trafienie
-    let critChance = gameState.critChance;
-    if (gameState.inventory.accessory && gameState.inventory.accessory.critChance) {
-      critChance += gameState.inventory.accessory.critChance;
+    let critChance = state.critChance;
+    if (state.inventory.accessory && state.inventory.accessory.critChance) {
+      critChance += state.inventory.accessory.critChance;
     }
-    if (gameState.inventory.weapon && gameState.inventory.weapon.bonus && gameState.inventory.weapon.bonus.critChance) {
-      critChance += gameState.inventory.weapon.bonus.critChance;
+    if (state.inventory.weapon && state.inventory.weapon.bonus && state.inventory.weapon.bonus.critChance) {
+      critChance += state.inventory.weapon.bonus.critChance;
     }
     // Bonus z criticalMastery
-    if (gameState.skills.criticalMastery > 0) {
-      critChance += gameState.skills.criticalMastery * 3;
+    if (state.skills.criticalMastery > 0) {
+      critChance += state.skills.criticalMastery * 3;
     }
     
     if (Math.random() * 100 < critChance) {
@@ -67,8 +100,19 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     if (gameState.gameOver || !gameState.enemy || gameState.enemy.type === 'event') return;
     
     setGameState(prev => {
-      const { damage, critical } = calculateDamage();
+      const { damage, critical } = calculateDamage(prev);
       const newEnemyHealth = prev.enemy.health - damage;
+      
+      // Wampiryzm z akcesoriów (HP w skali 5 ulepszeń)
+      let vampirismHeal = 0;
+      if (prev.inventory.accessory && prev.inventory.accessory.upgradeLevel > 0) {
+        vampirismHeal = Math.floor(damage * 0.1) + (prev.inventory.accessory.upgradeLevel * 5); // 10% of damage + 5 per upgrade
+      }
+      
+      // Pasywne bonusy wampiryzmu z ascended akcesoriów
+      if (prev.passiveBonuses && prev.passiveBonuses.accessoryVampirism > 0) {
+        vampirismHeal += prev.passiveBonuses.accessoryVampirism;
+      }
       
       if (newEnemyHealth <= 0) {
         // Przeciwnik pokonany
@@ -144,12 +188,12 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
           regenMessage = ` 🌟 Regeneracja! +${regenAmount} HP!`;
         }
         
-        // Regeneracja ze skilla healthRegen
+        // Regeneracja ze skilla healthRegen (teraz regeneruje manę)
         if (prev.skills.healthRegen > 0) {
-          const healthRegenAmount = prev.skills.healthRegen;
-          newHealth = Math.min(newMaxHealth, newHealth + healthRegenAmount);
-          if (healthRegenAmount > 0) {
-            regenMessage += ` 💚 +${healthRegenAmount} HP (regen)!`;
+          const manaRegenAmount = prev.skills.healthRegen;
+          newMana = Math.min(newMaxMana, newMana + manaRegenAmount);
+          if (manaRegenAmount > 0) {
+            regenMessage += ` 💙 +${manaRegenAmount} MP (regen)!`;
           }
         }
         
@@ -184,9 +228,20 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
         
         // Obrona
         let totalDefense = prev.defense;
-        if (prev.inventory.armor) totalDefense += prev.inventory.armor.defense || 0;
+        if (prev.inventory.armor) {
+          totalDefense += prev.inventory.armor.defense || 0;
+          // Bonus z ulepszeń zbroi (obrona w skali 5 ulepszeń)
+          if (prev.inventory.armor.upgradeLevel > 0) {
+            totalDefense += prev.inventory.armor.upgradeLevel * 5;
+          }
+        }
         if (prev.inventory.armor && prev.inventory.armor.bonus && prev.inventory.armor.bonus.defense) {
           totalDefense += prev.inventory.armor.bonus.defense;
+        }
+        
+        // Pasywne bonusy z ascended zbroi
+        if (prev.passiveBonuses && prev.passiveBonuses.armorDefense > 0) {
+          totalDefense += prev.passiveBonuses.armorDefense;
         }
         
         enemyDamage = Math.max(1, enemyDamage - totalDefense);
@@ -203,11 +258,17 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
           };
         }
         
+        // Apply vampirism healing
+        let finalHealth = newPlayerHealth;
+        if (vampirismHeal > 0) {
+          finalHealth = Math.min(prev.maxHealth, newPlayerHealth + vampirismHeal);
+        }
+        
         return {
           ...prev,
           enemy: { ...prev.enemy, health: newEnemyHealth },
-          health: newPlayerHealth,
-          message: `${critical ? 'KRYT! ' : ''}Zadajesz ${damage} obrażeń! ${prev.enemy.name} kontratakuje za ${enemyDamage} obrażeń.`
+          health: finalHealth,
+          message: `${critical ? 'KRYT! ' : ''}Zadajesz ${damage} obrażeń! ${prev.enemy.name} kontratakuje za ${enemyDamage} obrażeń.${vampirismHeal > 0 ? ` Wampiryzm: +${vampirismHeal} HP!` : ''}`
         };
       }
     });
@@ -267,6 +328,45 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
             message = `Błyskawica za ${damage} obrażeń!`;
           }
           break;
+          
+        case 'skeletonSummon':
+          manaCost = 25;
+          if (newMana >= manaCost) {
+            const skeletons = 1 + skillLevel;
+            newMana -= manaCost;
+            message = `Przywołujesz ${skeletons} szkieletów do walki!`;
+          }
+          break;
+          
+        case 'darkStrike':
+          manaCost = 20;
+          if (newMana >= manaCost && newEnemy && newEnemy.type === 'enemy') {
+            const damage = skillLevel * 40;
+            newEnemy = { ...newEnemy, health: Math.max(0, newEnemy.health - damage) };
+            newMana -= manaCost;
+            message = `Mroczny Cios za ${damage} obrażeń!`;
+          }
+          break;
+          
+        case 'deathCurse':
+          manaCost = 30;
+          if (newMana >= manaCost && newEnemy && newEnemy.type === 'enemy') {
+            const damage = skillLevel * 45;
+            newEnemy = { ...newEnemy, health: Math.max(0, newEnemy.health - damage) };
+            newMana -= manaCost;
+            message = `Klątwa Śmierci za ${damage} obrażeń!`;
+          }
+          break;
+          
+        case 'hellfire':
+          manaCost = 30;
+          if (newMana >= manaCost && newEnemy && newEnemy.type === 'enemy') {
+            const damage = skillLevel * 50;
+            newEnemy = { ...newEnemy, health: Math.max(0, newEnemy.health - damage) };
+            newMana -= manaCost;
+            message = `Płomienie Piekła za ${damage} obrażeń!`;
+          }
+          break;
       }
       
       if (prev.mana < manaCost) {
@@ -313,9 +413,14 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
 
   // Obsługa eventów
   const handleEvent = () => {
-    if (!gameState.enemy || gameState.enemy.type !== 'event') return;
+    console.log('[handleEvent] Called with gameState.enemy:', gameState.enemy);
+    if (!gameState.enemy || gameState.enemy.type !== 'event') {
+      console.log('[handleEvent] Early return - not an event');
+      return;
+    }
     
     setGameState(prev => {
+      console.log('[handleEvent] Processing event:', prev.enemy);
       const event = prev.enemy;
       let newGold = prev.gold;
       let newHealth = prev.health;
@@ -327,8 +432,20 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
       }
       
       if (event.damage) {
-        newHealth = Math.max(1, newHealth - event.damage);
+        newHealth = newHealth - event.damage;
         message += ` Tracisz ${event.damage} HP!`;
+        
+        // Sprawdź czy gracz przeżył
+        if (newHealth <= 0) {
+          saveHighScore(prev.level, prev.floor, prev.prestigeLevel);
+          return {
+            ...prev,
+            health: 0,
+            gameOver: true,
+            autoClick: false,
+            message: `Zginąłeś w pułapce! Osiągnąłeś poziom ${prev.level} i piętro ${prev.floor}.`
+          };
+        }
       }
       
       if (event.heal) {
@@ -385,8 +502,8 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     // Sprawdź czy można ulepszyć (wymagania poziomu)
     const skillRequirements = {
       fireball: 1, heal: 1, criticalStrike: 1,
-      armor: 7, powerShot: 7, manaShield: 7,
-      lightning: 14, regeneration: 14, berserker: 14,
+      armor: 7, powerShot: 7, manaShield: 7, skeletonSummon: 7, darkStrike: 7,
+      lightning: 14, regeneration: 14, berserker: 14, deathCurse: 14, hellfire: 14,
       autoClick: 21, teleport: 21, divine: 21,
       berserkRage: 21, materialMagnet: 21, goldRush: 21,
       experienceBoost: 21, criticalMastery: 21, healthRegen: 21
@@ -428,8 +545,8 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
       const existingItem = newInventory[recipe.type];
       let craftedItem;
       
-      if (existingItem && existingItem.id === recipe.id && existingItem.upgradeLevel < 5) {
-        // Upgrade istniejącego przedmiotu
+      if (existingItem && existingItem.id === recipe.id && existingItem.upgradeLevel < 6) {
+        // Upgrade istniejącego przedmiotu (max level 6, potem ascend)
         const upgradeLevel = (existingItem.upgradeLevel || 0) + 1;
         const randomBonus = generateRandomBonus();
         
@@ -464,6 +581,31 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
           materials: newMaterials,
           inventory: newInventory,
           message: `Ulepszyłeś ${craftedItem.name}! +${randomBonus.value} ${randomBonus.name}!`
+        };
+      } else if (existingItem && existingItem.id === recipe.id && existingItem.upgradeLevel === 6) {
+        // Ascend - poziom 7 to ascend, daje pasywny bonus
+        const newPassiveBonuses = { ...prev.passiveBonuses };
+        
+        if (recipe.type === 'weapon') {
+          newPassiveBonuses.weaponDamage += 25; // Pasywny bonus ataku
+          newPassiveBonuses.ascendedWeapons += 1;
+        } else if (recipe.type === 'armor') {
+          newPassiveBonuses.armorDefense += 25; // Pasywny bonus obrony
+          newPassiveBonuses.ascendedArmors += 1;
+        } else if (recipe.type === 'accessory') {
+          newPassiveBonuses.accessoryVampirism += 15; // Pasywny bonus wampiryzmu
+          newPassiveBonuses.ascendedAccessories += 1;
+        }
+        
+        // Usuń przedmiot z ekwipunku po ascend
+        newInventory[recipe.type] = null;
+        
+        return {
+          ...prev,
+          materials: newMaterials,
+          inventory: newInventory,
+          passiveBonuses: newPassiveBonuses,
+          message: `🌟 ASCEND! ${recipe.name} został ascended! Otrzymujesz pasywny bonus!`
         };
       } else {
         // Nowy przedmiot
@@ -528,9 +670,22 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
       prestigeBonus: newPrestigeBonus,
       autoClick: false,
       inventory: { weapon: null, armor: null, accessory: null },
-      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0, berserkRage: 0, materialMagnet: 0, goldRush: 0, experienceBoost: 0, criticalMastery: 0, healthRegen: 0 },
+      skills: { 
+        // Podstawowe - resetowane
+        fireball: 0, heal: 0, criticalStrike: 0, 
+        // Poziom 7 - resetowane
+        armor: 0, powerShot: 0, manaShield: 0, skeletonSummon: 0, darkStrike: 0,
+        // Poziom 14 - resetowane
+        lightning: 0, regeneration: 0, berserker: 0, deathCurse: 0, hellfire: 0,
+        // Poziom 21 - ZACHOWANE po prestige (użyteczne)
+        autoClick: prev.skills.autoClick, teleport: 0, divine: 0,
+        berserkRage: prev.skills.berserkRage, materialMagnet: prev.skills.materialMagnet, 
+        goldRush: prev.skills.goldRush, experienceBoost: prev.skills.experienceBoost, 
+        criticalMastery: prev.skills.criticalMastery, healthRegen: prev.skills.healthRegen
+      },
+      passiveBonuses: prev.passiveBonuses, // Zachowaj pasywne bonusy po prestige
       materials: { wood: 0, iron: 0, steel: 0, mithril: 0, adamant: 0, gems: 0, essence: 0 },
-      message: `Prestige! Zaczynasz od nowa z bonusami! +${newPrestigeBonus}% ataku!`,
+      message: `Prestige! Zaczynasz od nowa z bonusami! +${newPrestigeBonus}% ataku! Zachowane umiejętności użyteczne!`,
       activeTab: 'game'
     }));
   };
@@ -627,11 +782,39 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
     });
   };
 
-  // Reset gry - teraz tylko ustawia flagę do pokazania modala
+  // Reset gry - teraz bezpośrednio resetuje grę
   const resetGame = () => {
     setGameState(prev => ({
-      ...prev,
-      showResetModal: true
+      level: 1,
+      health: 100,
+      maxHealth: 100,
+      mana: 50,
+      maxMana: 50,
+      gold: 50,
+      experience: 0,
+      experienceToNext: 100,
+      clickDamage: 10,
+      defense: 0,
+      critChance: 5,
+      playerClass: null,
+      playerName: '',
+      enemy: null,
+      floor: 1,
+      gameOver: false,
+      message: 'Witaj w The Darker Clicker! Wybierz swoją ścieżkę...',
+      activeTab: 'game',
+      showOptionsModal: false,
+      prestigeLevel: 0,
+      prestigeBonus: 0,
+      autoClick: false,
+      berserkActive: false,
+      berserkTimeLeft: 0,
+      inventory: { weapon: null, armor: null, accessory: null },
+      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0, berserkRage: 0, materialMagnet: 0, goldRush: 0, experienceBoost: 0, criticalMastery: 0, healthRegen: 0, skeletonSummon: 0, darkStrike: 0, deathCurse: 0, hellfire: 0 },
+      passiveBonuses: { weaponDamage: 0, armorDefense: 0, accessoryVampirism: 0, ascendedWeapons: 0, ascendedArmors: 0, ascendedAccessories: 0 },
+      materials: { wood: 0, iron: 0, steel: 0, mithril: 0, adamant: 0, gems: 0, essence: 0 },
+      highScores: prev.highScores, // Zachowaj high scores
+      showResetModal: false
     }));
   };
 
@@ -661,7 +844,8 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
       berserkActive: false,
       berserkTimeLeft: 0,
       inventory: { weapon: null, armor: null, accessory: null },
-      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0, berserkRage: 0, materialMagnet: 0, goldRush: 0, experienceBoost: 0, criticalMastery: 0, healthRegen: 0 },
+      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0, berserkRage: 0, materialMagnet: 0, goldRush: 0, experienceBoost: 0, criticalMastery: 0, healthRegen: 0, skeletonSummon: 0, darkStrike: 0, deathCurse: 0, hellfire: 0 },
+      passiveBonuses: { weaponDamage: 0, armorDefense: 0, accessoryVampirism: 0, ascendedWeapons: 0, ascendedArmors: 0, ascendedAccessories: 0 },
       materials: { wood: 0, iron: 0, steel: 0, mithril: 0, adamant: 0, gems: 0, essence: 0 },
       highScores: prev.highScores, // Zachowaj high scores
       showResetModal: false
@@ -718,7 +902,8 @@ export const createGameActions = (setGameState, gameState, classes, enemies, eve
       berserkActive: false,
       berserkTimeLeft: 0,
       inventory: { weapon: null, armor: null, accessory: null },
-      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0, berserkRage: 0, materialMagnet: 0, goldRush: 0, experienceBoost: 0, criticalMastery: 0, healthRegen: 0 },
+      skills: { fireball: 0, heal: 0, criticalStrike: 0, armor: 0, powerShot: 0, manaShield: 0, lightning: 0, regeneration: 0, berserker: 0, autoClick: 0, teleport: 0, divine: 0, berserkRage: 0, materialMagnet: 0, goldRush: 0, experienceBoost: 0, criticalMastery: 0, healthRegen: 0, skeletonSummon: 0, darkStrike: 0, deathCurse: 0, hellfire: 0 },
+      passiveBonuses: { weaponDamage: 0, armorDefense: 0, accessoryVampirism: 0, ascendedWeapons: 0, ascendedArmors: 0, ascendedAccessories: 0 },
       materials: { wood: 0, iron: 0, steel: 0, mithril: 0, adamant: 0, gems: 0, essence: 0 },
       highScores: prev.highScores, // Zachowaj high scores
       showExitModal: false

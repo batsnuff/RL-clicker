@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ClassConfirmation({ selectedClass, classData, playerName, onConfirm, onCancel }) {
+export default function ClassConfirmation({ selectedClass, classData, onConfirm, onCancel }) {
   const classIcons = {
     warrior: '⚔️',
     mage: '🔮',
@@ -8,9 +8,9 @@ export default function ClassConfirmation({ selectedClass, classData, playerName
   };
 
   const classDescriptions = {
-    warrior: 'Silny wojownik specjalizujący się w walce wręcz. Ma wysokie HP i obronę, ale niską manę.',
-    mage: 'Potężny mag używający zaklęć. Ma wysoką manę i umiejętności magiczne, ale niskie HP.',
-    archer: 'Zwinny łucznik atakujący z dystansu. Zbalansowane statystyki i umiejętności strzeleckie.'
+    warrior: 'Zbrojny w ciemności, gotowy na walkę z potworami z głębin. Mistrz walki wręcz z wysoką wytrzymałością.',
+    mage: 'Mistrz zaklęć śmierci, przywołujący moc z zaświatów. Potężny nekromanta z ogromną mocą magiczną.',
+    archer: 'Zwinny zabójca, polujący w ciemnościach na najgroźniejsze bestie. Łowca cieni z precyzyjnymi atakami.'
   };
 
   return (
@@ -20,13 +20,6 @@ export default function ClassConfirmation({ selectedClass, classData, playerName
           {/* Tytuł */}
           <h2 className="text-3xl font-bold text-white mb-6 animate-darkSoulsGlow">Potwierdź Wybór Klasy</h2>
           
-          {/* Nazwa postaci */}
-          {playerName && (
-            <div className="mb-4">
-              <p className="text-lg text-gray-300">Nazwa postaci:</p>
-              <p className="text-2xl font-bold text-cyan-400">{playerName}</p>
-            </div>
-          )}
           
           {/* Ikona i nazwa klasy */}
           <div className="text-8xl mb-4">{classIcons[selectedClass]}</div>

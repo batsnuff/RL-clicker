@@ -10,9 +10,13 @@ export default function HighScores({ highScores }) {
         {highScores.map((score, index) => (
           <div key={index} className="bg-gradient-to-br from-gray-800 to-gray-900 p-3 rounded text-white text-sm text-center border border-red-600 animate-darkSoulsRise">
             <div className="font-bold">#{index + 1}</div>
-            <div>Poziom: {score.level}</div>
-            <div>Piętro: {score.floor}</div>
-            <div className="text-yellow-400">★{score.prestigeLevel}</div>
+            <div className="text-lg font-bold">
+              {score.level} level
+              {score.prestigeLevel > 0 && (
+                <span className="text-red-400"> {score.prestigeLevel}💀</span>
+              )}
+              / szczelina {score.floor}
+            </div>
             <div className="text-xs text-gray-400">{score.date}</div>
           </div>
         ))}

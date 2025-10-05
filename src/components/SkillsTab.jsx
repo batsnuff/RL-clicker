@@ -119,6 +119,50 @@ export default function SkillsTab({ gameState, gameActions }) {
             </div>
           )}
 
+          {gameState.playerClass === 'mage' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 7 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">🦴 Przywołanie Szkieleta</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.skeletonSummon || 0}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Przywołuje {1 + (gameState.skills.skeletonSummon || 0)} szkieletów do walki za 25 MP
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {((gameState.skills.skeletonSummon || 0) + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('skeletonSummon')}
+                disabled={gameState.gold < ((gameState.skills.skeletonSummon || 0) + 1) * 50 || gameState.level < 7}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= ((gameState.skills.skeletonSummon || 0) + 1) * 50 && gameState.level >= 7
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 7 ? 'Poziom 7' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
+
+          {gameState.playerClass === 'warrior' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 7 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">⚔️ Mroczny Cios</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.darkStrike || 0}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Zadaje {40 * ((gameState.skills.darkStrike || 0) + 1)} obrażeń ciemności za 20 MP
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {((gameState.skills.darkStrike || 0) + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('darkStrike')}
+                disabled={gameState.gold < ((gameState.skills.darkStrike || 0) + 1) * 50 || gameState.level < 7}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= ((gameState.skills.darkStrike || 0) + 1) * 50 && gameState.level >= 7
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 7 ? 'Poziom 7' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
+
           <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 7 ? 'opacity-50' : ''}`}>
             <h4 className="font-bold text-white mb-2">🔮 Mana Tarcza</h4>
             <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.manaShield}</p>
@@ -145,25 +189,71 @@ export default function SkillsTab({ gameState, gameActions }) {
       <div className="mb-8">
         <h3 className="text-lg font-bold text-white mb-4">📙 Poziom 14 - Eksperckie</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 14 ? 'opacity-50' : ''}`}>
-            <h4 className="font-bold text-white mb-2">⚡ Błyskawica</h4>
-            <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.lightning}</p>
-            <p className="text-gray-300 text-sm mb-3">
-              Zadaje {35 * (gameState.skills.lightning + 1)} obrażeń za 25 MP
-            </p>
-            <div className="text-yellow-400 mb-3">💰 {(gameState.skills.lightning + 1) * 50} złota</div>
-            <button
-              onClick={() => gameActions.upgradeSkill('lightning')}
-              disabled={gameState.gold < (gameState.skills.lightning + 1) * 50 || gameState.level < 14}
-              className={`w-full px-4 py-2 rounded text-sm font-bold ${
-                gameState.gold >= (gameState.skills.lightning + 1) * 50 && gameState.level >= 14
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                  : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              {gameState.level < 14 ? 'Poziom 14' : 'Ulepsz'}
-            </button>
-          </div>
+          {gameState.playerClass === 'mage' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 14 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">☠️ Klątwa Śmierci</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.deathCurse || 0}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Zadaje {45 * ((gameState.skills.deathCurse || 0) + 1)} obrażeń śmierci za 30 MP
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {((gameState.skills.deathCurse || 0) + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('deathCurse')}
+                disabled={gameState.gold < ((gameState.skills.deathCurse || 0) + 1) * 50 || gameState.level < 14}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= ((gameState.skills.deathCurse || 0) + 1) * 50 && gameState.level >= 14
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 14 ? 'Poziom 14' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
+
+          {gameState.playerClass === 'archer' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 14 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">⚡ Błyskawica</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.lightning}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Zadaje {35 * (gameState.skills.lightning + 1)} obrażeń za 25 MP
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {(gameState.skills.lightning + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('lightning')}
+                disabled={gameState.gold < (gameState.skills.lightning + 1) * 50 || gameState.level < 14}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= (gameState.skills.lightning + 1) * 50 && gameState.level >= 14
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 14 ? 'Poziom 14' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
+
+          {gameState.playerClass === 'warrior' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 14 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">🔥 Płomienie Piekła</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.hellfire || 0}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Zadaje {50 * ((gameState.skills.hellfire || 0) + 1)} obrażeń ognia za 30 MP
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {((gameState.skills.hellfire || 0) + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('hellfire')}
+                disabled={gameState.gold < ((gameState.skills.hellfire || 0) + 1) * 50 || gameState.level < 14}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= ((gameState.skills.hellfire || 0) + 1) * 50 && gameState.level >= 14
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 14 ? 'Poziom 14' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
 
           <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 14 ? 'opacity-50' : ''}`}>
             <h4 className="font-bold text-white mb-2">💚 Regeneracja</h4>
@@ -185,25 +275,71 @@ export default function SkillsTab({ gameState, gameActions }) {
             </button>
           </div>
 
-          <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 14 ? 'opacity-50' : ''}`}>
-            <h4 className="font-bold text-white mb-2">⚔️ Berserker</h4>
-            <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.berserker}</p>
-            <p className="text-gray-300 text-sm mb-3">
-              Aktywuje berserk na {10 + (gameState.skills.berserker * 5)} sekund z +{50 + (gameState.skills.berserker * 25)}% obrażeń
-            </p>
-            <div className="text-yellow-400 mb-3">💰 {(gameState.skills.berserker + 1) * 50} złota</div>
-            <button
-              onClick={() => gameActions.upgradeSkill('berserker')}
-              disabled={gameState.gold < (gameState.skills.berserker + 1) * 50 || gameState.level < 14}
-              className={`w-full px-4 py-2 rounded text-sm font-bold ${
-                gameState.gold >= (gameState.skills.berserker + 1) * 50 && gameState.level >= 14
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              {gameState.level < 14 ? 'Poziom 14' : 'Ulepsz'}
-            </button>
-          </div>
+          {gameState.playerClass === 'warrior' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 14 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">🌑 Mroczna Aura</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.berserker}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Aktywuje mroczną aurę na {10 + (gameState.skills.berserker * 5)} sekund z +{50 + (gameState.skills.berserker * 25)}% obrażeń
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {(gameState.skills.berserker + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('berserker')}
+                disabled={gameState.gold < (gameState.skills.berserker + 1) * 50 || gameState.level < 14}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= (gameState.skills.berserker + 1) * 50 && gameState.level >= 14
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 14 ? 'Poziom 14' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
+
+          {gameState.playerClass === 'mage' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 14 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">🌑 Mroczna Aura</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.berserker}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Aktywuje mroczną aurę na {10 + (gameState.skills.berserker * 5)} sekund z +{50 + (gameState.skills.berserker * 25)}% obrażeń
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {(gameState.skills.berserker + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('berserker')}
+                disabled={gameState.gold < (gameState.skills.berserker + 1) * 50 || gameState.level < 14}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= (gameState.skills.berserker + 1) * 50 && gameState.level >= 14
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 14 ? 'Poziom 14' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
+
+          {gameState.playerClass === 'archer' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 14 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">⚔️ Berserker</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.berserker}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Aktywuje berserk na {10 + (gameState.skills.berserker * 5)} sekund z +{50 + (gameState.skills.berserker * 25)}% obrażeń
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {(gameState.skills.berserker + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('berserker')}
+                disabled={gameState.gold < (gameState.skills.berserker + 1) * 50 || gameState.level < 14}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= (gameState.skills.berserker + 1) * 50 && gameState.level >= 14
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 14 ? 'Poziom 14' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -231,25 +367,71 @@ export default function SkillsTab({ gameState, gameActions }) {
             </button>
           </div>
 
-          <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 21 ? 'opacity-50' : ''}`}>
-            <h4 className="font-bold text-white mb-2">⚔️ Berserk Rage</h4>
-            <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.berserkRage}</p>
-            <p className="text-gray-300 text-sm mb-3">
-              Berserk trwa +{2 * (gameState.skills.berserkRage + 1)} sekund dłużej
-            </p>
-            <div className="text-yellow-400 mb-3">💰 {(gameState.skills.berserkRage + 1) * 50} złota</div>
-            <button
-              onClick={() => gameActions.upgradeSkill('berserkRage')}
-              disabled={gameState.gold < (gameState.skills.berserkRage + 1) * 50 || gameState.level < 21}
-              className={`w-full px-4 py-2 rounded text-sm font-bold ${
-                gameState.gold >= (gameState.skills.berserkRage + 1) * 50 && gameState.level >= 21
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              {gameState.level < 21 ? 'Poziom 21' : 'Ulepsz'}
-            </button>
-          </div>
+          {gameState.playerClass === 'warrior' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 21 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">🌑 Mroczna Aura Rage</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.berserkRage}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Mroczna aura trwa +{2 * (gameState.skills.berserkRage + 1)} sekund dłużej
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {(gameState.skills.berserkRage + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('berserkRage')}
+                disabled={gameState.gold < (gameState.skills.berserkRage + 1) * 50 || gameState.level < 21}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= (gameState.skills.berserkRage + 1) * 50 && gameState.level >= 21
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 21 ? 'Poziom 21' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
+
+          {gameState.playerClass === 'mage' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 21 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">🌑 Mroczna Aura Rage</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.berserkRage}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Mroczna aura trwa +{2 * (gameState.skills.berserkRage + 1)} sekund dłużej
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {(gameState.skills.berserkRage + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('berserkRage')}
+                disabled={gameState.gold < (gameState.skills.berserkRage + 1) * 50 || gameState.level < 21}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= (gameState.skills.berserkRage + 1) * 50 && gameState.level >= 21
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 21 ? 'Poziom 21' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
+
+          {gameState.playerClass === 'archer' && (
+            <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 21 ? 'opacity-50' : ''}`}>
+              <h4 className="font-bold text-white mb-2 animate-darkSoulsGlow">⚔️ Berserk Rage</h4>
+              <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.berserkRage}</p>
+              <p className="text-gray-300 text-sm mb-3">
+                Berserk trwa +{2 * (gameState.skills.berserkRage + 1)} sekund dłużej
+              </p>
+              <div className="text-yellow-400 mb-3">💰 {(gameState.skills.berserkRage + 1) * 50} złota</div>
+              <button
+                onClick={() => gameActions.upgradeSkill('berserkRage')}
+                disabled={gameState.gold < (gameState.skills.berserkRage + 1) * 50 || gameState.level < 21}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  gameState.gold >= (gameState.skills.berserkRage + 1) * 50 && gameState.level >= 21
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {gameState.level < 21 ? 'Poziom 21' : 'Ulepsz'}
+              </button>
+            </div>
+          )}
 
           <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 21 ? 'opacity-50' : ''}`}>
             <h4 className="font-bold text-white mb-2">🧲 Magnes Materiałów</h4>
@@ -332,10 +514,10 @@ export default function SkillsTab({ gameState, gameActions }) {
           </div>
 
           <div className={`bg-gray-800 p-4 rounded-lg ${gameState.level < 21 ? 'opacity-50' : ''}`}>
-            <h4 className="font-bold text-white mb-2">💚 Regeneracja Zdrowia</h4>
+            <h4 className="font-bold text-white mb-2">💙 Regeneracja Many</h4>
             <p className="text-gray-300 text-sm mb-2">Poziom: {gameState.skills.healthRegen}</p>
             <p className="text-gray-300 text-sm mb-3">
-              +{1 * (gameState.skills.healthRegen + 1)} HP regeneracji co rundę
+              +{1 * (gameState.skills.healthRegen + 1)} MP regeneracji co rundę
             </p>
             <div className="text-yellow-400 mb-3">💰 {(gameState.skills.healthRegen + 1) * 50} złota</div>
             <button
@@ -343,7 +525,7 @@ export default function SkillsTab({ gameState, gameActions }) {
               disabled={gameState.gold < (gameState.skills.healthRegen + 1) * 50 || gameState.level < 21}
               className={`w-full px-4 py-2 rounded text-sm font-bold ${
                 gameState.gold >= (gameState.skills.healthRegen + 1) * 50 && gameState.level >= 21
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
                   : 'bg-gray-700 text-gray-500 cursor-not-allowed'
               }`}
             >

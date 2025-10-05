@@ -92,12 +92,16 @@ export default function RogueClickerGame() {
   };
 
   const enemies = [
-    { name: 'Goblin', baseHealth: 40, goldReward: 5, expReward: 10, type: 'normal' },
-    { name: 'Orc', baseHealth: 70, goldReward: 8, expReward: 15, type: 'normal' },
-    { name: 'Dark Wolf', baseHealth: 60, goldReward: 10, expReward: 12, type: 'beast' },
-    { name: 'Skeleton', baseHealth: 80, goldReward: 12, expReward: 18, type: 'undead' },
-    { name: 'Troll Boss', baseHealth: 200, goldReward: 50, expReward: 100, type: 'boss' },
-    { name: 'Dragon', baseHealth: 400, goldReward: 100, expReward: 200, type: 'boss' }
+    { name: 'Goblin', baseHealth: 40, goldReward: 25, expReward: 10, type: 'normal' },
+    { name: 'Orc', baseHealth: 70, goldReward: 40, expReward: 15, type: 'normal' },
+    { name: 'Dark Wolf', baseHealth: 60, goldReward: 35, expReward: 12, type: 'beast' },
+    { name: 'Skeleton', baseHealth: 80, goldReward: 50, expReward: 18, type: 'undead' },
+    { name: 'Basilisk', baseHealth: 120, goldReward: 80, expReward: 30, type: 'basilisk' },
+    { name: 'Bat', baseHealth: 30, goldReward: 20, expReward: 8, type: 'bat' },
+    { name: 'Snake', baseHealth: 45, goldReward: 30, expReward: 12, type: 'snake' },
+    { name: 'Ghost', baseHealth: 100, goldReward: 70, expReward: 25, type: 'ghost' },
+    { name: 'Troll Boss', baseHealth: 200, goldReward: 200, expReward: 100, type: 'boss' },
+    { name: 'Dragon', baseHealth: 400, goldReward: 400, expReward: 200, type: 'boss' }
   ];
 
   const shopItems = [
@@ -108,7 +112,7 @@ export default function RogueClickerGame() {
   ];
 
   const events = [
-    { id: 'treasure', name: 'Skarbiec!', description: 'Znalazłeś skrzynię ze skarbem!', reward: { gold: 50 } },
+    { id: 'treasure', name: 'Skarbiec!', description: 'Znalazłeś skrzynię ze skarbem!', reward: { gold: 150 } },
     { id: 'trap', name: 'Pułapka!', description: 'Wpadłeś w pułapkę!', damage: 20 },
     { id: 'merchant', name: 'Handlarz', description: 'Spotkałeś wędrownego handlarza!', discount: 20 },
     { id: 'healing_fountain', name: 'Źródło Uzdrowienia', description: 'Znajujesz magiczne źródło!', heal: 50 }

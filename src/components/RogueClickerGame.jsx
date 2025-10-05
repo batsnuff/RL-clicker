@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sword, Shield, Heart, Zap, RotateCcw, TrendingUp, ShoppingCart, Backpack, Hammer, Star, Play, Pause } from 'lucide-react';
 import { createGameActions } from './GameActions';
 import ClassSelection from './ClassSelection';
+import NameInputModal from './NameInputModal';
 import HighScores from './HighScores';
 import PlayerStats from './PlayerStats';
 import GameTab from './GameTab';
@@ -13,11 +14,14 @@ import LevelUpNotification from './LevelUpNotification';
 import HelpModal from './HelpModal';
 import ResetConfirmationModal from './ResetConfirmationModal';
 import ExitConfirmationModal from './ExitConfirmationModal';
+import OptionsModal from './OptionsModal';
 
 export default function RogueClickerGame() {
   const [isLoading, setIsLoading] = useState(true);
   const [levelUp, setLevelUp] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [selectedClassForName, setSelectedClassForName] = useState(null);
   const [craftingCategory, setCraftingCategory] = useState('weapon');
   const [gameState, setGameState] = useState({
     // Statystyki gracza
@@ -47,6 +51,7 @@ export default function RogueClickerGame() {
     
     // UI
     activeTab: 'game',
+    showOptionsModal: false,
     
     // Prestige
     prestigeLevel: 0,
@@ -70,6 +75,16 @@ export default function RogueClickerGame() {
       accessory: null
     },
     
+    // Pasywne bonusy z ekwipunku (ascend system)
+    passiveBonuses: {
+      weaponDamage: 0,    // Pasywny bonus ataku z broni
+      armorDefense: 0,    // Pasywny bonus obrony z zbroi
+      accessoryVampirism: 0, // Pasywny bonus wampiryzmu z akcesoriów
+      ascendedWeapons: 0, // Liczba ascended broni
+      ascendedArmors: 0, // Liczba ascended zbroi
+      ascendedAccessories: 0 // Liczba ascended akcesoriów
+    },
+    
     // Umiejętności
     skills: {
       // Podstawowe
@@ -80,10 +95,14 @@ export default function RogueClickerGame() {
       armor: 0,
       powerShot: 0,
       manaShield: 0,
+      skeletonSummon: 0,
+      darkStrike: 0,
       // Poziom 14
       lightning: 0,
       regeneration: 0,
       berserker: 0,
+      deathCurse: 0,
+      hellfire: 0,
       // Poziom 21
       autoClick: 0,
       teleport: 0,
@@ -144,12 +163,16 @@ export default function RogueClickerGame() {
   };
 
   const enemies = [
-    { name: 'Goblin', baseHealth: 40, goldReward: 5, expReward: 10, type: 'normal' },
-    { name: 'Orc', baseHealth: 70, goldReward: 8, expReward: 15, type: 'normal' },
-    { name: 'Dark Wolf', baseHealth: 60, goldReward: 10, expReward: 12, type: 'beast' },
-    { name: 'Skeleton', baseHealth: 80, goldReward: 12, expReward: 18, type: 'undead' },
-    { name: 'Troll Boss', baseHealth: 200, goldReward: 50, expReward: 100, type: 'boss' },
-    { name: 'Dragon', baseHealth: 400, goldReward: 100, expReward: 200, type: 'boss' }
+    { name: 'Goblin', baseHealth: 40, goldReward: 25, expReward: 10, type: 'normal' },
+    { name: 'Orc', baseHealth: 70, goldReward: 40, expReward: 15, type: 'normal' },
+    { name: 'Dark Wolf', baseHealth: 60, goldReward: 35, expReward: 12, type: 'beast' },
+    { name: 'Skeleton', baseHealth: 80, goldReward: 50, expReward: 18, type: 'undead' },
+    { name: 'Basilisk', baseHealth: 120, goldReward: 80, expReward: 30, type: 'basilisk' },
+    { name: 'Bat', baseHealth: 30, goldReward: 20, expReward: 8, type: 'bat' },
+    { name: 'Snake', baseHealth: 45, goldReward: 30, expReward: 12, type: 'snake' },
+    { name: 'Ghost', baseHealth: 100, goldReward: 70, expReward: 25, type: 'ghost' },
+    { name: 'Troll Boss', baseHealth: 200, goldReward: 200, expReward: 100, type: 'boss' },
+    { name: 'Dragon', baseHealth: 400, goldReward: 400, expReward: 200, type: 'boss' }
   ];
 
   const shopItems = [
@@ -160,7 +183,7 @@ export default function RogueClickerGame() {
   ];
 
   const events = [
-    { id: 'treasure', name: 'Skarbiec!', description: 'Znalazłeś skrzynię ze skarbem!', reward: { gold: 50 } },
+    { id: 'treasure', name: 'Skarbiec!', description: 'Znalazłeś skrzynię ze skarbem!', reward: { gold: 150 } },
     { id: 'trap', name: 'Pułapka!', description: 'Wpadłeś w pułapkę!', damage: 20 },
     { id: 'merchant', name: 'Handlarz', description: 'Spotkałeś wędrownego handlarza!', discount: 20 },
     { id: 'healing_fountain', name: 'Źródło Uzdrowienia', description: 'Znajujesz magiczne źródło!', heal: 50 }
@@ -557,8 +580,8 @@ export default function RogueClickerGame() {
       return { type: 'event', ...event };
     }
 
-    const enemyIndex = Math.min(Math.floor((floor - 1) / 5), enemies.length - 1);
-    const baseEnemy = enemies[enemyIndex];
+    // Losowy wybór potwora z wszystkich dostępnych
+    const baseEnemy = enemies[Math.floor(Math.random() * enemies.length)];
     const level = Math.floor((floor + 4) / 5);
     
     // Improved scaling - exponential growth
@@ -566,8 +589,8 @@ export default function RogueClickerGame() {
     const health = Math.floor(baseEnemy.baseHealth * healthMultiplier);
     
     // Scale rewards with floor
-    const goldMultiplier = 1 + (floor - 1) * 0.1; // 10% increase per floor
-    const expMultiplier = 1 + (floor - 1) * 0.15; // 15% increase per floor
+    const goldMultiplier = 1 + (floor - 1) * 0.25; // 25% increase per floor
+    const expMultiplier = 1 + (floor - 1) * 0.20; // 20% increase per floor
     
     return {
       type: 'enemy',
@@ -707,6 +730,38 @@ export default function RogueClickerGame() {
         onCancel={gameActions.cancelReset}
       />
       
+      {/* Name Input Modal */}
+      <NameInputModal 
+        isOpen={showNameModal}
+        onConfirm={(playerName) => {
+          gameActions.selectClass(selectedClassForName, playerName);
+          setShowNameModal(false);
+          setSelectedClassForName(null);
+        }}
+        onCancel={() => {
+          setShowNameModal(false);
+          setSelectedClassForName(null);
+        }}
+        className={selectedClassForName}
+        classData={selectedClassForName ? classes[selectedClassForName] : null}
+      />
+      
+      {/* Options Modal */}
+      <OptionsModal 
+        isOpen={gameState.showOptionsModal}
+        onSaveAndExit={() => {
+          gameActions.saveAndExit();
+          setGameState(prev => ({ ...prev, showOptionsModal: false }));
+        }}
+        onNewGame={() => {
+          gameActions.resetGame();
+          setGameState(prev => ({ ...prev, showOptionsModal: false }));
+        }}
+        onCancel={() => {
+          setGameState(prev => ({ ...prev, showOptionsModal: false }));
+        }}
+      />
+      
       <div className="max-w-6xl mx-auto">
         
         {/* High Scores */}
@@ -717,7 +772,10 @@ export default function RogueClickerGame() {
           <>
             <ClassSelection 
               classes={classes} 
-              onSelectClass={gameActions.selectClass} 
+              onSelectClass={(className) => {
+                setSelectedClassForName(className);
+                setShowNameModal(true);
+              }} 
             />
             
             {/* Przycisk wczytania gry */}
@@ -766,24 +824,15 @@ export default function RogueClickerGame() {
                 })}
               </div>
               
-              {/* Przyciski akcji - na dole na małych ekranach, po bokach na większych */}
+              {/* Przycisk opcji */}
               <div className="flex justify-center items-center gap-2 mt-2">
                 <button
-                  onClick={gameActions.saveAndExit}
+                  onClick={() => setGameState(prev => ({ ...prev, showOptionsModal: true }))}
                   className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white px-2 py-1 rounded-lg flex items-center gap-1 transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs animate-slideIn border border-red-400 animate-darkSoulsGlow"
                 >
                   <Shield size={12} />
-                  <span className="hidden sm:inline">Zapisz i wyjdź</span>
-                  <span className="sm:hidden">Zapisz</span>
-                </button>
-
-                <button
-                  onClick={gameActions.resetGame}
-                  className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white px-2 py-1 rounded-lg flex items-center gap-1 transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs animate-slideIn border border-red-400 animate-darkSoulsGlow"
-                >
-                  <RotateCcw size={12} />
-                  <span className="hidden sm:inline">Reset Gry</span>
-                  <span className="sm:hidden">Reset</span>
+                  <span className="hidden sm:inline">Opcje</span>
+                  <span className="sm:hidden">Opcje</span>
                 </button>
               </div>
             </div>
@@ -821,7 +870,7 @@ export default function RogueClickerGame() {
                     <h4 className="text-base sm:text-xl font-bold text-yellow-400">
                       Piętro {gameState.floor}
                       {gameState.prestigeLevel > 0 && (
-                        <span className="text-yellow-300 ml-2">★{gameState.prestigeLevel}</span>
+                        <span className="text-red-400 ml-2">[💀{gameState.prestigeLevel}]</span>
                       )}
                     </h4>
                   </div>
@@ -861,15 +910,19 @@ export default function RogueClickerGame() {
                       transform: 'translateX(-50%)'
                     }}
                   >
-                    {gameState.enemy.enemyType === 'boss' ? '👹' : 
+                    {gameState.enemy.enemyType === 'boss' ? '🐉' : 
                      gameState.enemy.enemyType === 'beast' ? '🐺' :
-                     gameState.enemy.enemyType === 'undead' ? '💀' : '👹'}
+                     gameState.enemy.enemyType === 'undead' ? '💀' : 
+                     gameState.enemy.enemyType === 'basilisk' ? '🦎' :
+                     gameState.enemy.enemyType === 'bat' ? '🦇' :
+                     gameState.enemy.enemyType === 'snake' ? '🐍' :
+                     gameState.enemy.enemyType === 'ghost' ? '👻' : '🐍'}
                     {/* Mroczny efekt wokół potwora */}
                     <div className="absolute inset-0 bg-red-500 bg-opacity-20 rounded-full blur-xl animate-darkSoulsFlicker" />
                     {/* Efekt "ciągnięcia" w kierunku czaszki */}
                     {gameState.enemy.health < gameState.enemy.maxHealth * 0.5 && (
                       <div className="absolute -right-8 top-1/2 transform -translate-y-1/2 text-red-500 text-2xl animate-darkSoulsFloat">
-                        👻
+                        ⚡
                       </div>
                     )}
                   </div>
@@ -986,16 +1039,16 @@ export default function RogueClickerGame() {
 
             {/* Event - tylko w zakładce game */}
             {gameState.activeTab === 'game' && gameState.enemy && gameState.enemy.type === 'event' && (
-              <div className="bg-gradient-to-br from-gray-900 via-black to-yellow-900 rounded-lg p-8 mb-5 border-2 border-yellow-600 text-center animate-darkSoulsRise">
+              <div className="bg-gradient-to-br from-gray-900 via-black to-yellow-900 rounded-lg p-8 mb-5 border-2 border-yellow-600 text-center animate-darkSoulsRise relative z-10">
                 <h3 className="text-2xl font-bold text-white mb-4">
                   {gameState.enemy.name}
                 </h3>
-                <div className="text-white mb-4">
+                <div className="text-white mb-6 text-lg">
                   {gameState.enemy.description}
                 </div>
                 <button
                   onClick={gameActions.handleEvent}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg text-lg font-bold"
+                  className="bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 text-white px-8 py-4 rounded-lg text-xl font-bold cursor-pointer transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg z-20 relative pointer-events-auto"
                 >
                   Kontynuuj
                 </button>

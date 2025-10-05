@@ -21,6 +21,10 @@ export default function PlayerStats({ gameState, onToggleAutoClick, classes }) {
     // Add weapon bonuses
     if (gameState.inventory.weapon) {
       totalDamage += gameState.inventory.weapon.damage || 0;
+      // Bonus z ulepszeń broni (atak w skali 5 ulepszeń)
+      if (gameState.inventory.weapon.upgradeLevel > 0) {
+        totalDamage += gameState.inventory.weapon.upgradeLevel * 5;
+      }
       if (gameState.inventory.weapon.bonus) {
         if (gameState.inventory.weapon.bonus.damage) {
           totalDamage += gameState.inventory.weapon.bonus.damage;
@@ -36,10 +40,19 @@ export default function PlayerStats({ gameState, onToggleAutoClick, classes }) {
         }
       }
     }
+    
+    // Pasywne bonusy z ascended broni
+    if (gameState.passiveBonuses && gameState.passiveBonuses.weaponDamage > 0) {
+      totalDamage += gameState.passiveBonuses.weaponDamage;
+    }
 
     // Add armor bonuses
     if (gameState.inventory.armor) {
       totalDefense += gameState.inventory.armor.defense || 0;
+      // Bonus z ulepszeń zbroi (obrona w skali 5 ulepszeń)
+      if (gameState.inventory.armor.upgradeLevel > 0) {
+        totalDefense += gameState.inventory.armor.upgradeLevel * 5;
+      }
       if (gameState.inventory.armor.bonus) {
         if (gameState.inventory.armor.bonus.defense) {
           totalDefense += gameState.inventory.armor.bonus.defense;
@@ -52,6 +65,11 @@ export default function PlayerStats({ gameState, onToggleAutoClick, classes }) {
         }
       }
     }
+    
+    // Pasywne bonusy z ascended zbroi
+    if (gameState.passiveBonuses && gameState.passiveBonuses.armorDefense > 0) {
+      totalDefense += gameState.passiveBonuses.armorDefense;
+    }
 
     // Add accessory bonuses
     if (gameState.inventory.accessory) {
@@ -61,6 +79,8 @@ export default function PlayerStats({ gameState, onToggleAutoClick, classes }) {
       if (gameState.inventory.accessory.critChance) {
         totalCritChance += gameState.inventory.accessory.critChance;
       }
+      // Note: Wampiryzm (HP w skali 5 ulepszeń) jest efektem bojowym, nie statystyką
+      // Vampirism healing = 10% of damage + (upgradeLevel * 5) HP per attack
     }
 
     return {
@@ -85,7 +105,13 @@ export default function PlayerStats({ gameState, onToggleAutoClick, classes }) {
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-white text-sm">
         <div className="flex items-center gap-2">
           <TrendingUp className="text-yellow-400" size={16} />
-          <span>Lv.{gameState.level} {gameState.prestigeLevel > 0 && <span className="text-yellow-400">★</span>}</span>
+          <span>
+            {gameState.level} level
+            {gameState.prestigeLevel > 0 && (
+              <span className="text-red-400"> {gameState.prestigeLevel}💀</span>
+            )}
+            / szczelina {gameState.floor}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <Heart className="text-red-400" size={16} />
@@ -155,6 +181,37 @@ export default function PlayerStats({ gameState, onToggleAutoClick, classes }) {
           <div>✨ {gameState.materials.essence || 0}</div>
         </div>
       </div>
+
+      {/* Pasywne bonusy z ascended ekwipunku */}
+      {gameState.passiveBonuses && (
+        (gameState.passiveBonuses.weaponDamage > 0 || 
+         gameState.passiveBonuses.armorDefense > 0 || 
+         gameState.passiveBonuses.accessoryVampirism > 0) && (
+          <div className="mt-4">
+            <div className="text-white text-sm mb-2">🌟 Pasywne bonusy (Ascend):</div>
+            <div className="grid grid-cols-3 gap-2 text-white text-xs">
+              {gameState.passiveBonuses.weaponDamage > 0 && (
+                <div className="bg-red-900 bg-opacity-50 p-2 rounded">
+                  ⚔️ +{gameState.passiveBonuses.weaponDamage} ataku
+                </div>
+              )}
+              {gameState.passiveBonuses.armorDefense > 0 && (
+                <div className="bg-blue-900 bg-opacity-50 p-2 rounded">
+                  🛡️ +{gameState.passiveBonuses.armorDefense} obrony
+                </div>
+              )}
+              {gameState.passiveBonuses.accessoryVampirism > 0 && (
+                <div className="bg-purple-900 bg-opacity-50 p-2 rounded">
+                  🩸 +{gameState.passiveBonuses.accessoryVampirism} wampiryzmu
+                </div>
+              )}
+            </div>
+            <div className="text-gray-400 text-xs mt-2">
+              Ascended: {gameState.passiveBonuses.ascendedWeapons} broni, {gameState.passiveBonuses.ascendedArmors} zbroi, {gameState.passiveBonuses.ascendedAccessories} akcesoriów
+            </div>
+          </div>
+        )
+      )}
     </div>
   );
 }
